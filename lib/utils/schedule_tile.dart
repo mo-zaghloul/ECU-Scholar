@@ -47,7 +47,7 @@ class ScheduleTile extends StatelessWidget {
                     Text(
                     schedule.courseName,
                     overflow: TextOverflow.ellipsis,
-                    style: AppTextStyles.subtitle1.copyWith(fontWeight: FontWeight.bold),
+                    style: AppTextStyles.subtitle1bold,
                     ),
                   Text(
                     schedule.lecturerName,

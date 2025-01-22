@@ -1,8 +1,22 @@
+import 'package:ecu_scholar/models/student.dart';
+import 'package:ecu_scholar/utils/academic_advisor_tile.dart';
+import 'package:ecu_scholar/utils/profile_tile.dart';
 import 'package:flutter/material.dart';
 
 import '../constants/text_styles.dart';
 
 class ProfilePage extends StatelessWidget {
+  ProfilePage({super.key});
+  final Student _student = Student(
+    studentName: 'John Doe',
+    studentID: '1234567890',
+    studentDegree: 'BSc in Computer Science',
+    studentFaculty: 'Faculty of Science',
+    studentMajor: 'Computer Science',
+    studentCGPA: '3.81',
+    studentLevel: 'Level 2',
+    studentTotalPassedHours: '37.00',
+  );
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -15,33 +29,114 @@ class ProfilePage extends StatelessWidget {
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: <Widget>[
-            Center(
-              child: CircleAvatar(
-                radius: 50,
-                backgroundImage: AssetImage('assets/profile_picture.png'),
+            CircleAvatar(
+              radius: 50,
+              backgroundImage: AssetImage('assets/student_persona.png'),
+              backgroundColor: Colors.grey,
+            ),
+            Text(
+              _student.studentName,
+              style: AppTextStyles.headline2,
+            ),
+            Text(_student.studentID, style: AppTextStyles.subtitle2),
+
+            // Academic Details
+            Row(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.only(top: 20.0, bottom: 2.0),
+                  child: Text('Academic Details',
+                      style: AppTextStyles.headline3.copyWith(
+                        fontWeight: FontWeight.bold,
+                      )),
+                ),
+              ],
+            ),
+
+            SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Row(
+                children: [
+                  ProfileTile(
+                      icon: Icons.school,
+                      title: 'Degree',
+                      body: _student.studentDegree),
+                  ProfileTile(
+                      icon: Icons.business,
+                      title: 'Faculty',
+                      body: _student.studentFaculty),
+                  ProfileTile(
+                      icon: Icons.category,
+                      title: 'Major',
+                      body: _student.studentMajor),
+                ],
               ),
             ),
-            SizedBox(height: 20),
-            Text(
-              'Name: John Doe',
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+            // Academic Information
+            Row(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.only(top: 20.0, bottom: 2.0),
+                  child: Text('Advisor Information',
+                      style: AppTextStyles.headline3.copyWith(
+                        fontWeight: FontWeight.bold,
+                      )),
+                ),
+              ],
             ),
-            SizedBox(height: 10),
-            Text(
-              'Email: johndoe@example.com',
-              style: TextStyle(fontSize: 16),
+            AcademicAdvisorTile(
+              icon: Icons.person,
+              title: 'Academic Advisor',
+              name: 'Ahmed Ali',
+              email: ' ahmedali@ecu.edu.eg',
             ),
-            SizedBox(height: 10),
-            Text(
-              'Phone: +1234567890',
-              style: TextStyle(fontSize: 16),
+
+            // Academic Performance
+            Row(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.only(top: 20.0, bottom: 2.0),
+                  child: Text('Academic Performance',
+                      style: AppTextStyles.headline3.copyWith(
+                        fontWeight: FontWeight.bold,
+                      )),
+                ),
+              ],
             ),
-            SizedBox(height: 10),
-            Text(
-              'Bio: Lorem ipsum dolor sit amet, consectetur adipiscing elit. Vivamus lacinia odio vitae vestibulum vestibulum.',
-              style: TextStyle(fontSize: 16),
+            Padding(
+              padding: const EdgeInsets.only(top: 6.0),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text('CGPA:', style: AppTextStyles.subtitle1bold),
+                  Text(_student.studentCGPA, style: AppTextStyles.bodyText1),
+                ],
+              ),
+            ),
+            // Level
+            Padding(
+              padding: const EdgeInsets.only(top: 6.0),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text('Level:', style: AppTextStyles.subtitle1bold),
+                  Text(_student.studentLevel, style: AppTextStyles.bodyText1),
+                ],
+              ),
+            ),
+            // Total Passed Credits
+            Padding(
+              padding: const EdgeInsets.only(top: 6.0),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text('Total Passed CH:', style: AppTextStyles.subtitle1bold),
+                  Text(_student.studentTotalPassedHours,
+                      style: AppTextStyles.bodyText1),
+                ],
+              ),
             ),
           ],
         ),

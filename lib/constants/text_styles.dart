@@ -31,6 +31,10 @@ class AppTextStyles {
     fontSize: 16.0,
     fontWeight: FontWeight.w500,
   );
+  static final TextStyle subtitle1bold = GoogleFonts.almarai(
+    fontSize: 16.0,
+    fontWeight: FontWeight.bold,
+  );
   static final TextStyle subtitle2 = GoogleFonts.almarai(
     fontSize: 14.0,
     fontWeight: FontWeight.w500,
