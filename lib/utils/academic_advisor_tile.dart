@@ -20,7 +20,7 @@ class AcademicAdvisorTile extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.only(right: 12, top: 0, bottom: 6),
         decoration: BoxDecoration(
-          color: lightMode.primaryColorLight,
+          color: Color.fromARGB(255, 209, 197, 197),
           borderRadius: BorderRadius.circular(18),
         ),
         height: 90,

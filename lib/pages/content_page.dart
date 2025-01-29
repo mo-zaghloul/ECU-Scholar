@@ -1,13 +1,14 @@
-import 'package:ecu_scholar/constants/text_styles.dart';
+import 'package:ecu_scholar/utils/content_tile.dart';
 import 'package:flutter/material.dart';
+import '../constants/text_styles.dart';
+import '../models/content.dart';
 
 class ContentPage extends StatelessWidget {
-  final List<Map<String, String>> mockContent = [
-    {'title': 'Introduction to Flutter', 'subtitle': 'Learn the basics of Flutter'},
-    {'title': 'State Management', 'subtitle': 'Understanding state management in Flutter'},
-    {'title': 'Networking', 'subtitle': 'Fetch data from the internet'},
-    {'title': 'Database', 'subtitle': 'Persist data locally'},
-    {'title': 'Animations', 'subtitle': 'Add animations to your app'},
+  ContentPage({super.key});
+  final List<Content> coursesContent = [
+    Content(courseName: 'Data Structures and Algorithms', major: 'Engineering', sectionGroup: 'G2-2', classType: 'Lec', coverImage: 'assets/images/coverImages/blue_cover_image.png'),
+    Content(courseName: 'Operating Systems', major: 'Computer Science', sectionGroup: 'G2-2', classType: 'Lab', coverImage: 'assets/images/coverImages/green_cover_image.png'),
+    Content(courseName: 'Software Engineering', major: 'Engineering', sectionGroup: 'G2-2', classType: 'Lec', coverImage: 'assets/images/coverImages/yellow_cover_image.png')
   ];
 
   @override
@@ -19,15 +20,30 @@ class ContentPage extends StatelessWidget {
         elevation: 0,
         backgroundColor: Colors.white,
       ),
-      body: ListView.builder(
-        itemCount: mockContent.length,
-        itemBuilder: (context, index) {
-          return ListTile(
-            title: Text(mockContent[index]['title']!),
-            subtitle: Text(mockContent[index]['subtitle']!),
-          );
-        },
-      ),
-    );
+      body: Column(
+        children: [
+                Padding(
+                  padding: const EdgeInsets.all(12.0),
+                  child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'Content',
+                        style: AppTextStyles.headline2,
+                      ),
+                    ],
+                  ),
+                ),
+            Expanded(
+              child: ListView.builder(
+                itemCount: coursesContent.length,
+                itemBuilder: (context, index) {
+                  return ContentTile(content: coursesContent[index]);
+                },
+              ),
+            ),
+          ],
+        ),
+      );
   }
 }
