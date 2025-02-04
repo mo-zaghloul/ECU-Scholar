@@ -19,7 +19,7 @@ Each section describes a problem I faced as a student and how I addressed it in 
 ✅ **Clean and readable UI**, making it easy to check daily and weekly schedules.  
 
 📷 *Before & After Images:*
-![Logo](readme_assets\beforenafter_schedule.png)
+![Logo](readme_assets/beforenafter_schedule.png)
 
 ---
 
@@ -34,8 +34,9 @@ Each section describes a problem I faced as a student and how I addressed it in 
 ✅ **Categorized by Lectures, Tutorials, and Labs**, so students can quickly access what they need.  
 ✅ **Mobile-friendly display**, unlike the university’s website.  
 
-📷 *Screenshot of the Content Tab*
-![Logo](readme_assets\content.png)
+📷 *Content Tab:* 
+![Logo](readme_assets/content.png)
+
 ---
 
 ### 📝 Problem: No Proper Task Management for Students
@@ -48,8 +49,9 @@ Each section describes a problem I faced as a student and how I addressed it in 
 ✅ **Organized interface** for managing academic responsibilities.  
 ✅ **Potential future enhancement:** **Reminders/notifications** for upcoming deadlines.  
 
-📷 *Screenshot of the To-Do Tab*
-![Logo](readme_assets\beforenafter_tasks.png)
+📷 *To-Do Tab*
+![Logo](readme_assets/beforenafter_tasks.png)
+
 ---
 
 ### 📊 Problem: No Mobile Access to Student Grades & Profile Info
@@ -63,8 +65,8 @@ Each section describes a problem I faced as a student and how I addressed it in 
   - **Semester grades** in an easy-to-read format  
 ✅ **Potential future enhancement:** **GPA calculation & progress tracking**.  
 
-📷 *Screenshot of the Profile Tab*
-![Logo](readme_assets\beforenafter_profile.png)
+📷 *Before & After Images:* ![Logo](readme_assets/beforenafter_profile.png)
+
 ---
 
 ## 🛠 Future Enhancements
@@ -93,7 +95,7 @@ Each section describes a problem I faced as a student and how I addressed it in 
 
 ---
 
-## 🚀 Making Student & TA Life Easier!
+## 🚀 Making Student & TAs Life Easier!
 With ECU Scholar, I'm working to create a **seamless university experience** for students and teaching assistants alike. The goal is to **simplify academic life** by **centralizing schedules, learning materials, tasks, and attendance** in a **mobile-first** experience.
 
 ---
