@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../constants/text_styles.dart';
 
 class TasksPage extends StatelessWidget {
+  TasksPage({super.key});
   final List<String> tasks = [
     'Buy groceries',
     'Walk the dog',

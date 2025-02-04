@@ -1,13 +1,21 @@
-import 'package:ecu_scholar/pages/home_page.dart';
-import 'package:ecu_scholar/pages/schedule_page.dart';
+import 'package:ecu_scholar/view_models/student_viewmodel.dart';
+import 'package:ecu_scholar/views/home_page.dart';
 import 'package:ecu_scholar/themes/theme_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'view_models/schedule_list_viewmodel.dart';
+
+
 
 void main() {
   runApp(
-    ChangeNotifierProvider(
-      create: (context) => ThemeProvider(),
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider<ThemeProvider>(create: (context) => ThemeProvider()),
+        ChangeNotifierProvider<ScheduleListViewModel>(create: (context) => ScheduleListViewModel()),
+        ChangeNotifierProvider<StudentViewModel>(create: (context) => StudentViewModel()),
+        // Add more providers here as needed
+      ],
       child: const MyApp(),
     ),
   );
@@ -24,4 +32,5 @@ class MyApp extends StatelessWidget {
       theme: Provider.of<ThemeProvider>(context).themeData,
     );
   }
+  
 }

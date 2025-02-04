@@ -1,24 +1,54 @@
-import 'package:ecu_scholar/models/student.dart';
 import 'package:ecu_scholar/utils/academic_advisor_tile.dart';
 import 'package:ecu_scholar/utils/profile_tile.dart';
+import 'package:ecu_scholar/view_models/student_viewmodel.dart';
 import 'package:flutter/material.dart';
-
+import 'package:provider/provider.dart';
 import '../constants/text_styles.dart';
+import '../models/student_model.dart';
 
-class ProfilePage extends StatelessWidget {
-  ProfilePage({super.key});
+
+class ProfilePage extends StatefulWidget {
+  const ProfilePage({super.key});
+
+  @override
+  _ProfilePageState createState() => _ProfilePageState();
+}
+  /*
   final Student _student = Student(
-    studentName: 'John Doe',
-    studentID: '1234567890',
-    studentDegree: 'BSc in Computer Science',
-    studentFaculty: 'Faculty of Science',
-    studentMajor: 'Computer Science',
-    studentCGPA: '3.81',
-    studentLevel: 'Level 2',
-    studentTotalPassedHours: '37.00',
+    name: 'John Doe',
+    id: '1234567890',
+    degree: 'BSc in Computer Science',
+    faculty: 'Faculty of Science',
+    major: 'Computer Science',
+    cgpa: '3.81',
+    level: 'Level 2',
+    totalPassedHours: '37.00',
   );
+  */
+  class _ProfilePageState extends State<ProfilePage> {
+  @override
+  void initState() {
+    super.initState();
+    fetchStudentData();
+  }
+
+  Future<void> fetchStudentData() async {
+    await Provider.of<StudentViewModel>(context, listen: false).fetchStudentData();
+  }
+
   @override
   Widget build(BuildContext context) {
+    var student = Provider.of<StudentViewModel>(context).studentData;
+    student = Student(
+    name: 'Mohamed Zaghloul',
+    id: '192300513',
+    degree: 'B.Sc',
+    faculty: 'Faculty of Engineering and Technology', 
+    major: 'Software Engineering and Information Technology',
+    cgpa: '3.81',
+    level: 'Level 2',
+    totalPassedHours: '55.00',
+  );
     return Scaffold(
       appBar: AppBar(
         title: Text('Profile', style: AppTextStyles.headline3),
@@ -32,15 +62,18 @@ class ProfilePage extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.center,
           children: <Widget>[
             CircleAvatar(
-              radius: 50,
-              backgroundImage: AssetImage('assets/studentpersona.png'),
-              backgroundColor: Colors.grey,
+              radius: 55,
+              child: Text(student.name[0], style: TextStyle(fontSize: 70),),
+              // backgroundImage: AssetImage('assets/images/studentpersona.png'),
+              backgroundColor: const Color.fromARGB(244, 206, 20, 7),
             ),
             Text(
-              _student.studentName,
-              style: AppTextStyles.headline2,
+              student.name,
+              style: AppTextStyles.headline3.copyWith(
+                fontWeight: FontWeight.bold,
+              ),
             ),
-            Text(_student.studentID, style: AppTextStyles.subtitle2),
+            Text(student.id, style: AppTextStyles.headline3),
 
             // Academic Details
             Row(
@@ -62,15 +95,15 @@ class ProfilePage extends StatelessWidget {
                   ProfileTile(
                       icon: Icons.school,
                       title: 'Degree',
-                      body: _student.studentDegree),
+                      body: student.degree),
                   ProfileTile(
                       icon: Icons.business,
                       title: 'Faculty',
-                      body: _student.studentFaculty),
+                      body: student.faculty),
                   ProfileTile(
                       icon: Icons.category,
                       title: 'Major',
-                      body: _student.studentMajor),
+                      body: student.major),
                 ],
               ),
             ),
@@ -105,16 +138,18 @@ class ProfilePage extends StatelessWidget {
                 ),
               ],
             ),
+            /*
             Padding(
               padding: const EdgeInsets.only(top: 6.0),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text('CGPA:', style: AppTextStyles.subtitle1bold),
-                  Text(_student.studentCGPA, style: AppTextStyles.bodyText1),
+                  Text(student.cgpa, style: AppTextStyles.bodyText1),
                 ],
               ),
             ),
+            */
             // Level
             Padding(
               padding: const EdgeInsets.only(top: 6.0),
@@ -122,7 +157,7 @@ class ProfilePage extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text('Level:', style: AppTextStyles.subtitle1bold),
-                  Text(_student.studentLevel, style: AppTextStyles.bodyText1),
+                  Text(student.level, style: AppTextStyles.bodyText1),
                 ],
               ),
             ),
@@ -133,7 +168,7 @@ class ProfilePage extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text('Total Passed CH:', style: AppTextStyles.subtitle1bold),
-                  Text(_student.studentTotalPassedHours,
+                  Text(student.totalPassedHours,
                       style: AppTextStyles.bodyText1),
                 ],
               ),

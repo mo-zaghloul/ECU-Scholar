@@ -1,5 +1,5 @@
 import 'package:ecu_scholar/constants/text_styles.dart';
-import 'package:ecu_scholar/models/content.dart';
+import 'package:ecu_scholar/models/content_model.dart';
 import 'package:flutter/material.dart';
 
 class ContentTile extends StatelessWidget {

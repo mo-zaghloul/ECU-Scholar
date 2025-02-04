@@ -1,14 +1,14 @@
 import 'package:ecu_scholar/utils/content_tile.dart';
 import 'package:flutter/material.dart';
 import '../constants/text_styles.dart';
-import '../models/content.dart';
+import '../models/content_model.dart';
 
 class ContentPage extends StatelessWidget {
   ContentPage({super.key});
   final List<Content> coursesContent = [
-    Content(courseName: 'Data Structures and Algorithms', major: 'Engineering', sectionGroup: 'G2-2', classType: 'Lec', coverImage: 'assets/images/coverImages/blue_cover_image.png'),
-    Content(courseName: 'Operating Systems', major: 'Computer Science', sectionGroup: 'G2-2', classType: 'Lab', coverImage: 'assets/images/coverImages/green_cover_image.png'),
-    Content(courseName: 'Software Engineering', major: 'Engineering', sectionGroup: 'G2-2', classType: 'Lec', coverImage: 'assets/images/coverImages/yellow_cover_image.png')
+    Content(courseName: 'Data Structures and Algorithms', major: 'Engineering', sectionGroup: 'G2-2', classType: 'Lec', coverImage: 'assets/images/cover_images/blue_cover_image.png'),
+    Content(courseName: 'Operating Systems', major: 'Computer Science', sectionGroup: 'G2-2', classType: 'Lab', coverImage: 'assets/images/cover_images/yellow_cover_image.png'),
+    Content(courseName: 'Software Engineering', major: 'Engineering', sectionGroup: 'G2-2', classType: 'Lec', coverImage: 'assets/images/cover_images/green_cover_image.png')
   ];
 
   @override

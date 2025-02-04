@@ -1,9 +1,9 @@
 import 'package:ecu_scholar/widgets/bottom_nav_bar.dart';
 import 'package:flutter/material.dart';
-import 'package:ecu_scholar/pages/schedule_page.dart';
-import 'package:ecu_scholar/pages/content_page.dart';
-import 'package:ecu_scholar/pages/tasks_page.dart';
-import 'package:ecu_scholar/pages/profile_page.dart';
+import 'package:ecu_scholar/views/schedule_page.dart';
+import 'package:ecu_scholar/views/content_page.dart';
+import 'package:ecu_scholar/views/tasks_page.dart';
+import 'package:ecu_scholar/views/profile_page.dart';
 
 import '../constants/text_styles.dart';
 class HomePage extends StatefulWidget {

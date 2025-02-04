@@ -1,7 +1,7 @@
 import 'package:ecu_scholar/constants/text_styles.dart';
 import 'package:ecu_scholar/themes/light_mode.dart';
 import 'package:flutter/material.dart';
-import '../models/schedule.dart';
+import '../models/schedule_model.dart';
 
 class AcademicAdvisorTile extends StatelessWidget {
   final String title, name, email;

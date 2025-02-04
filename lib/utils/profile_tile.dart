@@ -1,6 +1,6 @@
 import 'package:ecu_scholar/constants/text_styles.dart';
 import 'package:flutter/material.dart';
-import '../models/schedule.dart';
+import '../models/schedule_model.dart';
 
 class ProfileTile extends StatelessWidget {
   final String title, body;
