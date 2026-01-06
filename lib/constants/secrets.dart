@@ -1,3 +1,4 @@
-const String EMAIL = '192300513@ecu.edu.eg';
-const String PASSWORD = '09595@sis';
-String SESSION_ID = 'ASP.NET_SessionId=xvsob3l1g4obynrylamcfo5i';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+
+String get baseUrl => dotenv.env['BASE_URL'] ?? 'http://127.0.0.1:8000';
+String get sessionToken => dotenv.env['SESSION_TOKEN'] ?? '';

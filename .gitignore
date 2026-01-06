@@ -1,5 +1,6 @@
 # Private
 secret.dart
+.env
 
 # Miscellaneous
 *.class

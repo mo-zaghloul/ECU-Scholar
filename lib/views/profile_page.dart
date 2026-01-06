@@ -39,16 +39,6 @@ class ProfilePage extends StatefulWidget {
   @override
   Widget build(BuildContext context) {
     var student = Provider.of<StudentViewModel>(context).studentData;
-    student = Student(
-    name: 'Mohamed Zaghloul',
-    id: '192300513',
-    degree: 'B.Sc',
-    faculty: 'Faculty of Engineering and Technology', 
-    major: 'Software Engineering and Information Technology',
-    cgpa: '3.81',
-    level: 'Level 2',
-    totalPassedHours: '55.00',
-  );
     return Scaffold(
       appBar: AppBar(
         title: Text('Profile', style: AppTextStyles.headline3),
@@ -63,7 +53,7 @@ class ProfilePage extends StatefulWidget {
           children: <Widget>[
             CircleAvatar(
               radius: 55,
-              child: Text(student.name[0], style: TextStyle(fontSize: 70),),
+              child: Text(student.name.isNotEmpty ? student.name[0] : '?', style: TextStyle(fontSize: 70),),
               // backgroundImage: AssetImage('assets/images/studentpersona.png'),
               backgroundColor: const Color.fromARGB(244, 206, 20, 7),
             ),
@@ -73,60 +63,9 @@ class ProfilePage extends StatefulWidget {
                 fontWeight: FontWeight.bold,
               ),
             ),
-            Text(student.id, style: AppTextStyles.headline3),
+            Text(student.faculty, style: AppTextStyles.bodyText1),
 
-            // Academic Details
-            Row(
-              children: [
-                Padding(
-                  padding: const EdgeInsets.only(top: 20.0, bottom: 2.0),
-                  child: Text('Academic Details',
-                      style: AppTextStyles.headline3.copyWith(
-                        fontWeight: FontWeight.bold,
-                      )),
-                ),
-              ],
-            ),
-
-            SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              child: Row(
-                children: [
-                  ProfileTile(
-                      icon: Icons.school,
-                      title: 'Degree',
-                      body: student.degree),
-                  ProfileTile(
-                      icon: Icons.business,
-                      title: 'Faculty',
-                      body: student.faculty),
-                  ProfileTile(
-                      icon: Icons.category,
-                      title: 'Major',
-                      body: student.major),
-                ],
-              ),
-            ),
-            // Academic Information
-            Row(
-              children: [
-                Padding(
-                  padding: const EdgeInsets.only(top: 20.0, bottom: 2.0),
-                  child: Text('Advisor Information',
-                      style: AppTextStyles.headline3.copyWith(
-                        fontWeight: FontWeight.bold,
-                      )),
-                ),
-              ],
-            ),
-            AcademicAdvisorTile(
-              icon: Icons.person,
-              title: 'Academic Advisor',
-              name: 'Ahmed Ali',
-              email: ' ahmedali@ecu.edu.eg',
-            ),
-
-            // Academic Performance
+            // GPA Display
             Row(
               children: [
                 Padding(
@@ -138,38 +77,13 @@ class ProfilePage extends StatefulWidget {
                 ),
               ],
             ),
-            /*
             Padding(
               padding: const EdgeInsets.only(top: 6.0),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text('CGPA:', style: AppTextStyles.subtitle1bold),
-                  Text(student.cgpa, style: AppTextStyles.bodyText1),
-                ],
-              ),
-            ),
-            */
-            // Level
-            Padding(
-              padding: const EdgeInsets.only(top: 6.0),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text('Level:', style: AppTextStyles.subtitle1bold),
-                  Text(student.level, style: AppTextStyles.bodyText1),
-                ],
-              ),
-            ),
-            // Total Passed Credits
-            Padding(
-              padding: const EdgeInsets.only(top: 6.0),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text('Total Passed CH:', style: AppTextStyles.subtitle1bold),
-                  Text(student.totalPassedHours,
-                      style: AppTextStyles.bodyText1),
+                  Text('GPA:', style: AppTextStyles.subtitle1bold),
+                  Text(student.gpa, style: AppTextStyles.bodyText1),
                 ],
               ),
             ),

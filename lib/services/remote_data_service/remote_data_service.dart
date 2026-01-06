@@ -1,90 +1,63 @@
-import 'package:cookie_jar/cookie_jar.dart';
 import 'package:dio/dio.dart';
-import 'package:dio_cookie_manager/dio_cookie_manager.dart';
 import 'package:ecu_scholar/models/schedule_model.dart';
 import 'package:ecu_scholar/models/student_model.dart';
 import 'package:flutter/material.dart';
-import 'package:html/dom.dart' as dom;
 
 import '../../constants/secrets.dart';
 
-class LMSUniversityApi {
-  // Define the URL to request
-  final String url = 'https://sis.ecu.edu.eg/UI/StudentView/Home.aspx';
+class BackendApiService {
+  late final Dio _dio;
+
+  BackendApiService() {
+    debugPrint('Base URL: $baseUrl');
+    debugPrint('Sess: $sessionToken');
+
+    _dio = Dio(BaseOptions(
+      baseUrl: baseUrl,
+      headers: {
+        'accept': 'application/json',
+        'x-session-token': sessionToken,
+      },
+    ));
+  }
 
   Future<List<Schedule>> fetchSchedules() async {
-    final dio = Dio();
-    final cookieJar = CookieJar();
-
-    // Add the cookie manager to dio
-    dio.interceptors.add(CookieManager(cookieJar));
-    dio.options.headers['Cookie'] = SESSION_ID;
-
     try {
-      // Make the GET request with cookies
-      var response = await dio.get(url);
+      final response = await _dio.get('/scraping/schedule');
 
       if (response.statusCode == 200) {
-        String data = response.data;
-        dom.Document html = dom.Document.html(data);
-        final scheduleStringList = html
-            .querySelectorAll('#ctl00_cntphmaster_Panel1 > div > ul > li > a')
-            .map((element) => element.innerHtml.trim())
+        final List<dynamic> scheduleList = response.data['schedule'];
+        final schedules = scheduleList
+            .map((item) => Schedule.fromJson(item as Map<String, dynamic>))
             .toList();
-        List<Schedule> schedules =
-            scheduleStringList.map((e) => Schedule.parseSchedule(e)).toList();
 
         debugPrint('Success: Schedules loaded successfully');
         return schedules;
       } else {
-        debugPrint(
-            'Failed to load schedules \n status code = ${response.statusCode}');
-        throw Exception(
-            'Failed to load schedules \n status code = ${response.statusCode}');
+        debugPrint('Failed to load schedules. Status code: ${response.statusCode}');
+        throw Exception('Failed to load schedules. Status code: ${response.statusCode}');
       }
     } catch (e) {
-      debugPrint('Failed to fetch data: $e');
-      throw Exception('Failed to fetch data: $e');
+      debugPrint('Failed to fetch schedules: $e');
+      throw Exception('Failed to fetch schedules: $e');
     }
   }
 
   Future<Student> fetchStudentData() async {
-    final dio = Dio();
-    final cookieJar = CookieJar();
-    dio.interceptors.add(CookieManager(cookieJar));
-    dio.options.headers['Cookie'] = SESSION_ID;
-
     try {
-      var response = await dio.get(url);
+      final response = await _dio.get('/scraping/student');
+
       if (response.statusCode == 200) {
-        dom.Document html = dom.Document.html(response.data);
-
-        Map<String, String> selectors = {
-          'Student Name': '#ctl00_cntphmaster_StudDataGeneralControl1_lblStud',
-          'Student ID':
-              '#ctl00_cntphmaster_StudDataGeneralControl1_lnkStudCode',
-          'Degree': '#ctl00_cntphmaster_StudDataGeneralControl1_lblScDegree',
-          'Faculty': '#ctl00_cntphmaster_StudDataGeneralControl1_lblFaculty',
-          'Major': '#ctl00_cntphmaster_StudDataGeneralControl1_lblMajior',
-          'Level': '#ctl00_cntphmaster_StudDataGeneralControl1_LblLvl',
-          'Total Passed Hours':
-              '#ctl00_cntphmaster_StudDataGeneralControl1_lblTotPassedCh',
-          'CGPA': '#ctl00_cntphmaster_StudDataGeneralControl1_lbLCGPA',
-        };
-
-        Map<String, String> scrapedData = {};
-        selectors.forEach((key, selector) {
-          scrapedData[key] = html.querySelector(selector)?.text.trim() ?? 'Empty';
-        });
-        debugPrint(response.data);
-        return Student.fromMap(scrapedData);
-
+        final studentData = response.data as Map<String, dynamic>;
+        debugPrint('Success: Student data loaded successfully');
+        return Student.fromJson(studentData);
       } else {
-        throw Exception(
-            'Failed to load data. Status Code: ${response.statusCode}');
+        debugPrint('Failed to load student data. Status code: ${response.statusCode}');
+        throw Exception('Failed to load student data. Status code: ${response.statusCode}');
       }
     } catch (e) {
-      throw Exception('in file remote data service /// Error fetching data: $e');
+      debugPrint('Failed to fetch student data: $e');
+      throw Exception('Failed to fetch student data: $e');
     }
   }
 }
