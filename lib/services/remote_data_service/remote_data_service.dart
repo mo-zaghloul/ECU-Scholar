@@ -4,21 +4,31 @@ import 'package:ecu_scholar/models/student_model.dart';
 import 'package:flutter/material.dart';
 
 import '../../constants/secrets.dart';
+import '../auth_service/auth_service.dart';
 
 class BackendApiService {
   late final Dio _dio;
+  final AuthService _authService = AuthService.instance;
 
   BackendApiService() {
+    final token = _authService.sessionToken ?? '';
     debugPrint('Base URL: $baseUrl');
-    debugPrint('Sess: $sessionToken');
+    debugPrint('Sess: $token');
 
     _dio = Dio(BaseOptions(
       baseUrl: baseUrl,
       headers: {
         'accept': 'application/json',
-        'x-session-token': sessionToken,
+        'x-session-token': token,
       },
     ));
+  }
+
+  /// Update the session token in the headers (useful after re-authentication)
+  void updateSessionToken() {
+    final token = _authService.sessionToken ?? '';
+    _dio.options.headers['x-session-token'] = token;
+    debugPrint('Session token updated in API service');
   }
 
   Future<List<Schedule>> fetchSchedules() async {
