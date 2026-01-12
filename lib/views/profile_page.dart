@@ -1,6 +1,8 @@
 import 'package:ecu_scholar/utils/academic_advisor_tile.dart';
 import 'package:ecu_scholar/utils/profile_tile.dart';
+import 'package:ecu_scholar/view_models/auth_viewmodel.dart';
 import 'package:ecu_scholar/view_models/student_viewmodel.dart';
+import 'package:ecu_scholar/views/auth_page.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../constants/text_styles.dart';
@@ -36,6 +38,39 @@ class ProfilePage extends StatefulWidget {
     await Provider.of<StudentViewModel>(context, listen: false).fetchStudentData();
   }
 
+  void _showLogoutDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Logout'),
+        content: const Text('Are you sure you want to logout?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              Navigator.pop(context); // Close dialog
+              await context.read<AuthViewModel>().logout();
+              if (context.mounted) {
+                Navigator.of(context).pushAndRemoveUntil(
+                  MaterialPageRoute(builder: (context) => const AuthPage()),
+                  (route) => false,
+                );
+              }
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red,
+              foregroundColor: Colors.white,
+            ),
+            child: const Text('Logout'),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     var student = Provider.of<StudentViewModel>(context).studentData;
@@ -45,6 +80,13 @@ class ProfilePage extends StatefulWidget {
         centerTitle: true,
         elevation: 0,
         backgroundColor: Colors.white,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.logout),
+            tooltip: 'Logout',
+            onPressed: () => _showLogoutDialog(context),
+          ),
+        ],
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
