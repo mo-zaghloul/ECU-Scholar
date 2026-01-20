@@ -34,7 +34,7 @@ class BackendApiService {
   Future<List<Schedule>> fetchSchedules() async {
     try {
       final response = await _dio.get('/scraping/schedule');
-
+      debugPrint('Response: ${response.data}');
       if (response.statusCode == 200) {
         final List<dynamic> scheduleList = response.data['schedule'];
         final schedules = scheduleList
