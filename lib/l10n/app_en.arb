@@ -1,0 +1,16 @@
+{
+  "@@locale": "en",
+  
+  "onboardingTitle1": "Stay on Top of Your Learning",
+  "onboardingDesc1": "Everything you need to study is organized in a simple, easy-to-navigate interface. No more hunting through emails or folders—your content is always at your fingertips.",
+  
+  "onboardingTitle2": "Never Miss a Class Again",
+  "onboardingDesc2": "Your schedule is always up to date! View today's lectures, tutorials, and labs in a simple, clear format.",
+  
+  "onboardingTitle3": "Get Organized, Stay Ahead",
+  "onboardingDesc3": "Stay on top of assignments, projects, and personal tasks with the Tasks tab. Create your own to-do lists, set deadlines, and check off items as you complete them. It's your productivity booster!",
+
+  "next": "Next",
+  "skip": "Skip",
+  "getStarted": "Get Started"
+}

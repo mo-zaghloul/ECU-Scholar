@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:ecu_scholar/l10n/app_localizations.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:provider/provider.dart';
 import 'package:smooth_page_indicator/smooth_page_indicator.dart';
@@ -92,8 +93,36 @@ class _OnboardingPageState extends State<OnboardingPage>
     );
   }
 
+  String _getLocalizedTitle(AppLocalizations l10n, int index) {
+    switch (index) {
+      case 0:
+        return l10n.onboardingTitle1;
+      case 1:
+        return l10n.onboardingTitle2;
+      case 2:
+        return l10n.onboardingTitle3;
+      default:
+        return '';
+    }
+  }
+
+  String _getLocalizedSubtitle(AppLocalizations l10n, int index) {
+    switch (index) {
+      case 0:
+        return l10n.onboardingDesc1;
+      case 1:
+        return l10n.onboardingDesc2;
+      case 2:
+        return l10n.onboardingDesc3;
+      default:
+        return '';
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    
     return Scaffold(
       backgroundColor: Colors.white,
       body: Consumer<OnboardingViewModel>(
@@ -113,7 +142,7 @@ class _OnboardingPageState extends State<OnboardingPage>
                             ? null
                             : () => _skipOnboarding(viewModel),
                         child: Text(
-                          'Skip',
+                          l10n.skip,
                           style: TextStyle(
                             color: Colors.grey.shade600,
                             fontSize: 16,
@@ -130,8 +159,11 @@ class _OnboardingPageState extends State<OnboardingPage>
                       onPageChanged: _onPageChanged,
                       itemCount: viewModel.pages.length,
                       itemBuilder: (context, index) {
+                        final pageData = viewModel.pages[index];
                         return _OnboardingPageContent(
-                          pageData: viewModel.pages[index],
+                          svgAsset: pageData.svgAsset,
+                          title: _getLocalizedTitle(l10n, index),
+                          subtitle: _getLocalizedSubtitle(l10n, index),
                           isActive: index == viewModel.currentPage,
                         );
                       },
@@ -187,8 +219,8 @@ class _OnboardingPageState extends State<OnboardingPage>
                                 children: [
                                   Text(
                                     viewModel.isLastPage
-                                        ? 'Get Started'
-                                        : 'Next',
+                                        ? l10n.getStarted
+                                        : l10n.next,
                                     style: const TextStyle(
                                       fontSize: 18,
                                       fontWeight: FontWeight.w600,
@@ -215,11 +247,15 @@ class _OnboardingPageState extends State<OnboardingPage>
 
 /// Individual onboarding page content with animations
 class _OnboardingPageContent extends StatefulWidget {
-  final OnboardingPageData pageData;
+  final String svgAsset;
+  final String title;
+  final String subtitle;
   final bool isActive;
 
   const _OnboardingPageContent({
-    required this.pageData,
+    required this.svgAsset,
+    required this.title,
+    required this.subtitle,
     required this.isActive,
   });
 
@@ -288,7 +324,7 @@ class _OnboardingPageContentState extends State<_OnboardingPageContent>
           ScaleTransition(
             scale: _scaleAnimation,
             child: SvgPicture.asset(
-              widget.pageData.svgAsset,
+              widget.svgAsset,
               height: MediaQuery.of(context).size.height * 0.35,
               fit: BoxFit.contain,
             ),
@@ -302,7 +338,7 @@ class _OnboardingPageContentState extends State<_OnboardingPageContent>
             child: FadeTransition(
               opacity: _animationController,
               child: Text(
-                widget.pageData.title,
+                widget.title,
                 style: const TextStyle(
                   fontSize: 28,
                   fontWeight: FontWeight.bold,
@@ -325,7 +361,7 @@ class _OnboardingPageContentState extends State<_OnboardingPageContent>
                 curve: const Interval(0.3, 1.0),
               ),
               child: Text(
-                widget.pageData.subtitle,
+                widget.subtitle,
                 style: TextStyle(
                   fontSize: 16,
                   color: Colors.grey.shade600,

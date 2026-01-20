@@ -4,13 +4,13 @@ import '../services/onboarding_service/onboarding_service.dart';
 /// Model representing a single onboarding page
 class OnboardingPageData {
   final String svgAsset;
-  final String title;
-  final String subtitle;
+  final String titleKey;
+  final String subtitleKey;
 
   const OnboardingPageData({
     required this.svgAsset,
-    required this.title,
-    required this.subtitle,
+    required this.titleKey,
+    required this.subtitleKey,
   });
 }
 
@@ -25,23 +25,24 @@ class OnboardingViewModel extends ChangeNotifier {
   bool get isCompleting => _isCompleting;
   bool get isLastPage => _currentPage == pages.length - 1;
   bool get isFirstPage => _currentPage == 0;
+  int get pageCount => pages.length;
 
-  /// Onboarding pages data
+  /// Onboarding pages data with keys for localization
   final List<OnboardingPageData> pages = const [
     OnboardingPageData(
       svgAsset: 'assets/onboarding/Smart People.svg',
-      title: 'Welcome to ECU Scholar',
-      subtitle: 'Your all-in-one companion for navigating university life. Connect, learn, and succeed together.',
+      titleKey: 'onboardingTitle1',
+      subtitleKey: 'onboardingDesc1',
     ),
     OnboardingPageData(
       svgAsset: 'assets/onboarding/Student Studying.svg',
-      title: 'Track Your Progress',
-      subtitle: 'Access your grades, GPA, and academic records anytime. Stay on top of your academic journey.',
+      titleKey: 'onboardingTitle2',
+      subtitleKey: 'onboardingDesc2',
     ),
     OnboardingPageData(
       svgAsset: 'assets/onboarding/Manager Desk.svg',
-      title: 'Manage Your Schedule',
-      subtitle: 'View your class schedule, keep track of tasks, and never miss an important deadline.',
+      titleKey: 'onboardingTitle3',
+      subtitleKey: 'onboardingDesc3',
     ),
   ];
 

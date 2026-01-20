@@ -8,6 +8,8 @@ import 'package:ecu_scholar/views/onboarding_page.dart';
 import 'package:ecu_scholar/themes/theme_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:ecu_scholar/l10n/app_localizations.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:provider/provider.dart';
 import 'view_models/schedule_list_viewmodel.dart';
 
@@ -46,6 +48,16 @@ class MyApp extends StatelessWidget {
     
     return MaterialApp(
       debugShowCheckedModeBanner: false,
+      // Localization
+      localizationsDelegates: const [
+        AppLocalizations.delegate,
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
+      supportedLocales: const [
+        Locale('en'),
+      ],
       home: isOnboardingComplete ? const AuthPage() : const OnboardingPage(),
       theme: Provider.of<ThemeProvider>(context).themeData,
     );
