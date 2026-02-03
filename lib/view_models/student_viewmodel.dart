@@ -9,7 +9,7 @@ class StudentViewModel extends ChangeNotifier {
     name: 'N/A',
     faculty: 'N/A',
     gpa: 'N/A',
-    // id: 'N/A',
+    id: 'N/A',
     // degree: 'N/A',
     // major: 'N/A',
     // level: 'N/A',

@@ -119,7 +119,7 @@ class ProfilePage extends StatefulWidget {
                   ),
                   Text(student.faculty, style: AppTextStyles.bodyText1),
 
-                  // GPA Display
+                  // Academic Performance Section
                   Row(
                     children: [
                       Padding(
@@ -133,6 +133,18 @@ class ProfilePage extends StatefulWidget {
                       ),
                     ],
                   ),
+                  // Student ID Display
+                  Padding(
+                    padding: const EdgeInsets.only(top: 6.0),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text('Student ID:', style: AppTextStyles.subtitle1bold),
+                        Text(student.id, style: AppTextStyles.bodyText1),
+                      ],
+                    ),
+                  ),
+                  // GPA Display
                   Padding(
                     padding: const EdgeInsets.only(top: 6.0),
                     child: Row(
