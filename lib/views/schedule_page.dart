@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../view_models/schedule_list_viewmodel.dart';
 import '../widgets/bottom_nav_bar.dart'; // Import the BottomNavBar widget
+import '../widgets/shimmer_loading.dart';
 import '../utils/schedule_tile.dart';
 import '../models/schedule_model.dart';
 import '../constants/text_styles.dart';
@@ -65,9 +66,6 @@ class _SchedulePageState extends State<SchedulePage> {
 
   @override
   Widget build(BuildContext context) {
-    // Get the schedules from the view model
-    final _schedules = Provider.of<ScheduleListViewModel>(context).schedules;
-
     return RefreshIndicator(
       onRefresh: fetchSchedules,
       triggerMode: RefreshIndicatorTriggerMode.anywhere,
@@ -98,14 +96,24 @@ class _SchedulePageState extends State<SchedulePage> {
               ),
             ),
             Expanded(
-              child: _schedules.isEmpty
-                  ? EmptySchedulelistWidget()
-                  : ListView.builder(
-                      itemCount: _schedules.length,
-                      itemBuilder: (context, index) {
-                        return ScheduleTile(schedule: _schedules[index]);
-                      },
-                    ),
+              child: Consumer<ScheduleListViewModel>(
+                builder: (context, viewModel, child) {
+                  if (viewModel.isLoading) {
+                    return const ScheduleShimmer();
+                  }
+                  
+                  if (viewModel.schedules.isEmpty) {
+                    return EmptySchedulelistWidget();
+                  }
+                  
+                  return ListView.builder(
+                    itemCount: viewModel.schedules.length,
+                    itemBuilder: (context, index) {
+                      return ScheduleTile(schedule: viewModel.schedules[index]);
+                    },
+                  );
+                },
+              ),
             ),
           ],
         ),

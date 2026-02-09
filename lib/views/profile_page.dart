@@ -3,6 +3,7 @@ import 'package:ecu_scholar/utils/profile_tile.dart';
 import 'package:ecu_scholar/view_models/auth_viewmodel.dart';
 import 'package:ecu_scholar/view_models/student_viewmodel.dart';
 import 'package:ecu_scholar/views/auth_page.dart';
+import 'package:ecu_scholar/widgets/shimmer_loading.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../constants/text_styles.dart';
@@ -73,7 +74,6 @@ class ProfilePage extends StatefulWidget {
 
   @override
   Widget build(BuildContext context) {
-    var student = Provider.of<StudentViewModel>(context).studentData;
     return Scaffold(
       appBar: AppBar(
         title: Text('Profile', style: AppTextStyles.headline3),
@@ -88,49 +88,78 @@ class ProfilePage extends StatefulWidget {
           ),
         ],
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: <Widget>[
-            CircleAvatar(
-              radius: 55,
-              child: Text(student.name.isNotEmpty ? student.name[0] : '?', style: TextStyle(fontSize: 70),),
-              // backgroundImage: AssetImage('assets/images/studentpersona.png'),
-              backgroundColor: const Color.fromARGB(244, 206, 20, 7),
-            ),
-            Text(
-              student.name,
-              style: AppTextStyles.headline3.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            Text(student.faculty, style: AppTextStyles.bodyText1),
+      body: Consumer<StudentViewModel>(
+        builder: (context, viewModel, child) {
+          if (viewModel.isLoading) {
+            return const ProfileShimmer();
+          }
+          
+          final student = viewModel.studentData;
+          return RefreshIndicator(
+            onRefresh: fetchStudentData,
+            child: SingleChildScrollView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: <Widget>[
+                  CircleAvatar(
+                    radius: 55,
+                    backgroundColor: const Color.fromARGB(244, 206, 20, 7),
+                    child: Text(
+                      student.name.isNotEmpty ? student.name[0] : '?',
+                      style: const TextStyle(fontSize: 70),
+                    ),
+                  ),
+                  Text(
+                    student.name,
+                    style: AppTextStyles.headline3.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  Text(student.faculty, style: AppTextStyles.bodyText1),
 
-            // GPA Display
-            Row(
-              children: [
-                Padding(
-                  padding: const EdgeInsets.only(top: 20.0, bottom: 2.0),
-                  child: Text('Academic Performance',
-                      style: AppTextStyles.headline3.copyWith(
-                        fontWeight: FontWeight.bold,
-                      )),
-                ),
-              ],
-            ),
-            Padding(
-              padding: const EdgeInsets.only(top: 6.0),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text('GPA:', style: AppTextStyles.subtitle1bold),
-                  Text(student.gpa, style: AppTextStyles.bodyText1),
+                  // Academic Performance Section
+                  Row(
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.only(top: 20.0, bottom: 2.0),
+                        child: Text(
+                          'Academic Performance',
+                          style: AppTextStyles.headline3.copyWith(
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  // Student ID Display
+                  Padding(
+                    padding: const EdgeInsets.only(top: 6.0),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text('Student ID:', style: AppTextStyles.subtitle1bold),
+                        Text(student.id, style: AppTextStyles.bodyText1),
+                      ],
+                    ),
+                  ),
+                  // GPA Display
+                  Padding(
+                    padding: const EdgeInsets.only(top: 6.0),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text('GPA:', style: AppTextStyles.subtitle1bold),
+                        Text(student.gpa, style: AppTextStyles.bodyText1),
+                      ],
+                    ),
+                  ),
                 ],
               ),
             ),
-          ],
-        ),
+          );
+        },
       ),
     );
   }

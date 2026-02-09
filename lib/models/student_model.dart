@@ -2,7 +2,7 @@ class Student {
   final String name;
   final String faculty;
   final String gpa;
-  // final String id;
+  final String id;
   // final String degree;
   // final String major;
   // final String level;
@@ -12,7 +12,7 @@ class Student {
     required this.name,
     required this.faculty,
     required this.gpa,
-    // required this.id,
+    required this.id,
     // required this.degree,
     // required this.major,
     // required this.level,
@@ -36,7 +36,7 @@ class Student {
         name: json['name'] ?? 'N/A',
         gpa: json['gpa'] ?? 'N/A',
         faculty: json['faculty'] ?? 'N/A',
-        // id: json['studentID'],
+        id: json['id'] ?? 'N/A',
         // degree: json['studentDegree'],
         // major: json['studentMajor'],
         // level: json['studentLevel'],
