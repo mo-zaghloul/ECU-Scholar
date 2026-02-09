@@ -41,7 +41,7 @@ class ScheduleShimmer extends StatelessWidget {
                     height: 16,
                     decoration: BoxDecoration(
                       color: Colors.white,
-                      borderRadius: BorderRadius.circular(4),
+                      borderRadius: BorderRadius.circular(7),
                     ),
                   ),
                 ),
@@ -55,7 +55,7 @@ class ScheduleShimmer extends StatelessWidget {
                     height: 14,
                     decoration: BoxDecoration(
                       color: Colors.white,
-                      borderRadius: BorderRadius.circular(4),
+                      borderRadius: BorderRadius.circular(6),
                     ),
                   ),
                 ),
@@ -95,20 +95,20 @@ class ProfileShimmer extends StatelessWidget {
             // Name placeholder
             Container(
               width: 180,
-              height: 24,
+              height: 18,
               decoration: BoxDecoration(
                 color: Colors.white,
-                borderRadius: BorderRadius.circular(4),
+                borderRadius: BorderRadius.circular(6),
               ),
             ),
             const SizedBox(height: 8),
             // Faculty placeholder
             Container(
               width: 220,
-              height: 16,
+              height: 14,
               decoration: BoxDecoration(
                 color: Colors.white,
-                borderRadius: BorderRadius.circular(4),
+                borderRadius: BorderRadius.circular(6),
               ),
             ),
             const SizedBox(height: 32),
@@ -120,7 +120,7 @@ class ProfileShimmer extends StatelessWidget {
                 height: 20,
                 decoration: BoxDecoration(
                   color: Colors.white,
-                  borderRadius: BorderRadius.circular(4),
+                  borderRadius: BorderRadius.circular(6),
                 ),
               ),
             ),
