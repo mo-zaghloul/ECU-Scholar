@@ -1,10 +1,10 @@
+import 'package:ecu_scholar/views/grades_page.dart';
+import 'package:ecu_scholar/views/settings_page.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../view_models/schedule_list_viewmodel.dart';
-import '../widgets/bottom_nav_bar.dart'; // Import the BottomNavBar widget
 import '../widgets/shimmer_loading.dart';
 import '../utils/schedule_tile.dart';
-import '../models/schedule_model.dart';
 import '../constants/text_styles.dart';
 import '../utils/todays_date.dart';
 import '../widgets/empty_schedulelist_widget.dart';
@@ -75,12 +75,36 @@ class _SchedulePageState extends State<SchedulePage> {
           title: Text('Schedule', style: AppTextStyles.headline3),
           centerTitle: true,
           elevation: 0,
-          backgroundColor: Colors.white,
+          backgroundColor: Theme.of(context).colorScheme.surface,
+          foregroundColor: Theme.of(context).colorScheme.primary,
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.bar_chart_rounded),
+              tooltip: 'Grades',
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const GradesPage()),
+                );
+              },
+            ),
+            IconButton(
+              icon: const Icon(Icons.settings_outlined),
+              tooltip: 'Settings',
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const SettingsPage()),
+                );
+              },
+            ),
+          ],
         ),
         body: Column(
           children: [
             Padding(
-              padding: const EdgeInsets.only(top: 14, bottom: 12, right: 12.0, left: 12.0),
+              padding: const EdgeInsets.only(
+                  top: 14, bottom: 12, right: 12.0, left: 12.0),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -101,11 +125,11 @@ class _SchedulePageState extends State<SchedulePage> {
                   if (viewModel.isLoading) {
                     return const ScheduleShimmer();
                   }
-                  
+
                   if (viewModel.schedules.isEmpty) {
                     return EmptySchedulelistWidget();
                   }
-                  
+
                   return ListView.builder(
                     itemCount: viewModel.schedules.length,
                     itemBuilder: (context, index) {

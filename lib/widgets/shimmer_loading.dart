@@ -11,7 +11,7 @@ class ShimmerColors {
 class ScheduleShimmer extends StatelessWidget {
   final int itemCount;
 
-  const ScheduleShimmer({super.key, this.itemCount = 4});
+  const ScheduleShimmer({super.key, this.itemCount = 3});
 
   @override
   Widget build(BuildContext context) {
