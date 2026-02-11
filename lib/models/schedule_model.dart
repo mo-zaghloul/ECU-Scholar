@@ -48,7 +48,7 @@ class Schedule {
       case 'lab':
         return const Color(0xFF0000FF); // Blue
       default:
-        return const Color(0xFF9C27B0); // Purple for other types
+        return const Color(0xFFB71C1C); // Red for other types
     }
   }
 }
