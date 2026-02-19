@@ -106,6 +106,7 @@ flutter:
   assets:
     - assets/images/
     - assets/images/cover_images/
+    - assets/images/logo/
     - assets/onboarding/
     - .env
   #   - images/a_dot_ham.jpeg
