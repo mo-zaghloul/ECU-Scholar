@@ -104,6 +104,7 @@ class _SchedulePageState extends State<SchedulePage> {
           ],
         ),
         body: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Padding(
               padding: const EdgeInsets.only(
@@ -113,7 +114,7 @@ class _SchedulePageState extends State<SchedulePage> {
                 children: [
                   Text(
                     getDay(),
-                    style: AppTextStyles.headline2,
+                    style: AppTextStyles.headline1,
                   ),
                   Text(
                     getFormattedDatePart(),
