@@ -1,6 +1,7 @@
 import 'package:ecu_scholar/services/auth_service/auth_service.dart';
 import 'package:ecu_scholar/services/onboarding_service/onboarding_service.dart';
 import 'package:ecu_scholar/view_models/auth_viewmodel.dart';
+import 'package:ecu_scholar/view_models/grades_viewmodel.dart';
 import 'package:ecu_scholar/view_models/onboarding_viewmodel.dart';
 import 'package:ecu_scholar/view_models/student_viewmodel.dart';
 import 'package:ecu_scholar/views/auth_page.dart';
@@ -31,7 +32,7 @@ Future<void> main() async {
         ChangeNotifierProvider<OnboardingViewModel>(create: (context) => OnboardingViewModel()),
         ChangeNotifierProvider<ScheduleListViewModel>(create: (context) => ScheduleListViewModel()),
         ChangeNotifierProvider<StudentViewModel>(create: (context) => StudentViewModel()),
-        // Add more providers here as needed
+        ChangeNotifierProvider<GradesViewModel>(create: (context) => GradesViewModel()),
       ],
       child: const MyApp(),
     ),

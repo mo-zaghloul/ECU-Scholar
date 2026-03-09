@@ -1,9 +1,8 @@
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
-import 'package:provider/provider.dart';
 
-import '../view_models/auth_viewmodel.dart';
+import 'auth_processing_page.dart';
 
 /// WebView page for ECU SIS authentication.
 /// Opens the ECU login page and extracts the session token after successful login.
@@ -98,12 +97,12 @@ class _AuthWebViewPageState extends State<AuthWebViewPage> {
   Future<void> _saveAndClose(String token) async {
     if (!mounted) return;
     
-    final authViewModel = context.read<AuthViewModel>();
-    final success = await authViewModel.saveSessionToken(token);
-    
-    if (success && mounted) {
-      Navigator.of(context).pop(true);
-    }
+    // Navigate to the processing page which will call /auth/init
+    Navigator.of(context).pushReplacement(
+      MaterialPageRoute(
+        builder: (context) => AuthProcessingPage(sessionToken: token),
+      ),
+    );
   }
 
   void _showWebPlatformSnackBar() {

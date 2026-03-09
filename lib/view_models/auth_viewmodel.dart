@@ -1,13 +1,25 @@
 import 'package:flutter/foundation.dart';
+import '../models/student_model.dart';
 import '../services/auth_service/auth_service.dart';
+import '../services/remote_data_service/remote_data_service.dart';
 
 /// Enum representing the different states of authentication
 enum AuthState {
   initial,
   loading,
+  processing, // New state for backend processing
   authenticated,
   unauthenticated,
   error,
+}
+
+/// Result of auth initialization containing student data
+class AuthInitResult {
+  final bool success;
+  final Student? student;
+  final String? errorMessage;
+
+  AuthInitResult({required this.success, this.student, this.errorMessage});
 }
 
 /// ViewModel for managing authentication state and operations.
@@ -17,11 +29,13 @@ class AuthViewModel extends ChangeNotifier {
 
   AuthState _state = AuthState.initial;
   String? _errorMessage;
+  Student? _cachedStudent;
 
   AuthState get state => _state;
   String? get errorMessage => _errorMessage;
   String? get sessionToken => _authService.sessionToken;
   bool get isAuthenticated => _authService.isAuthenticated;
+  Student? get cachedStudent => _cachedStudent;
 
   /// Initialize the auth view model and check for existing session
   Future<void> initialize() async {
@@ -76,6 +90,49 @@ class AuthViewModel extends ChangeNotifier {
       _errorMessage = 'Error during logout: $e';
       _setState(AuthState.error);
       debugPrint(_errorMessage);
+    }
+  }
+
+  /// Initialize authentication with a session token from SIS cookie.
+  /// Calls backend /auth/init to scrape and store student data.
+  /// Returns AuthInitResult with student data on success.
+  Future<AuthInitResult> initializeWithToken(String sessionToken) async {
+    _setState(AuthState.processing);
+    _errorMessage = null;
+    _cachedStudent = null;
+
+    try {
+      // First, save the session token locally
+      final tokenSaved = await _authService.saveSessionToken(sessionToken);
+      if (!tokenSaved) {
+        _errorMessage = 'Failed to save session token locally';
+        _setState(AuthState.error);
+        return AuthInitResult(success: false, errorMessage: _errorMessage);
+      }
+
+      // Call backend to initialize auth and scrape data
+      final apiService = BackendApiService();
+      final response = await apiService.authInit(sessionToken);
+
+      // Save the student ID from the response
+      final student = response.student;
+      if (student.id.isNotEmpty) {
+        await _authService.saveStudentId(student.id);
+        _cachedStudent = student;
+        debugPrint('Auth init complete: Student ${student.name} (ID: ${student.id})');
+      } else {
+        _errorMessage = 'No student ID returned from server';
+        _setState(AuthState.error);
+        return AuthInitResult(success: false, errorMessage: _errorMessage);
+      }
+
+      _setState(AuthState.authenticated);
+      return AuthInitResult(success: true, student: student);
+    } catch (e) {
+      _errorMessage = e.toString().replaceFirst('Exception: ', '');
+      _setState(AuthState.error);
+      debugPrint('Auth init error: $_errorMessage');
+      return AuthInitResult(success: false, errorMessage: _errorMessage);
     }
   }
 

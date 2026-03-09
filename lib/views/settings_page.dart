@@ -253,7 +253,7 @@ class _SettingsPageState extends State<SettingsPage> {
         const SizedBox(height: 12),
         // Name
         Text(
-          student.name,
+          student.name.trim().split(' ').take(2).join(' '), // Show only first and second name
           style: GoogleFonts.almarai(
             fontSize: 22,
             fontWeight: FontWeight.bold,

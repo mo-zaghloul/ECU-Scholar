@@ -56,6 +56,7 @@ class _AuthPageState extends State<AuthPage> {
           switch (authViewModel.state) {
             case AuthState.loading:
             case AuthState.initial:
+            case AuthState.processing:
               return const Center(
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
@@ -203,7 +204,7 @@ class _AuthPageState extends State<AuthPage> {
               
               // Help text
               Text(
-                'By logging in, you agree to allow this app to access your ECU SIS data.',
+                "By logging in, you agree to allow this app to access your ECU Scholar's Terms and Usage Policy.",
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
                   color: Colors.grey.shade500,
                 ),
