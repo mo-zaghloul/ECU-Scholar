@@ -158,8 +158,9 @@ class _OnboardingPageState extends State<OnboardingPage>
                       itemCount: viewModel.pages.length,
                       itemBuilder: (context, index) {
                         final pageData = viewModel.pages[index];
+                        final isDarkMode = colorScheme.brightness == Brightness.dark;
                         return _OnboardingPageContent(
-                          svgAsset: pageData.svgAsset,
+                          svgAsset: pageData.getSvgAsset(isDarkMode),
                           title: _getLocalizedTitle(l10n, index),
                           subtitle: _getLocalizedSubtitle(l10n, index),
                           isActive: index == viewModel.currentPage,

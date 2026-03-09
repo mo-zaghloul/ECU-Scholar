@@ -3,15 +3,20 @@ import '../services/onboarding_service/onboarding_service.dart';
 
 /// Model representing a single onboarding page
 class OnboardingPageData {
-  final String svgAsset;
+  final String svgAssetLight;
+  final String svgAssetDark;
   final String titleKey;
   final String subtitleKey;
 
   const OnboardingPageData({
-    required this.svgAsset,
+    required this.svgAssetLight,
+    required this.svgAssetDark,
     required this.titleKey,
     required this.subtitleKey,
   });
+
+  /// Get the appropriate SVG asset based on dark mode
+  String getSvgAsset(bool isDarkMode) => isDarkMode ? svgAssetDark : svgAssetLight;
 }
 
 /// ViewModel for managing onboarding state and navigation.
@@ -30,17 +35,20 @@ class OnboardingViewModel extends ChangeNotifier {
   /// Onboarding pages data with keys for localization
   final List<OnboardingPageData> pages = const [
     OnboardingPageData(
-      svgAsset: 'assets/onboarding/Smart People.svg',
+      svgAssetLight: 'assets/onboarding/smart-people-dark.svg',
+      svgAssetDark: 'assets/onboarding/smart-people-light.svg',
       titleKey: 'onboardingTitle1',
       subtitleKey: 'onboardingDesc1',
     ),
     OnboardingPageData(
-      svgAsset: 'assets/onboarding/Student Studying.svg',
+      svgAssetLight: 'assets/onboarding/student-studying-dark.svg',
+      svgAssetDark: 'assets/onboarding/student-studying-light.svg',
       titleKey: 'onboardingTitle2',
       subtitleKey: 'onboardingDesc2',
     ),
     OnboardingPageData(
-      svgAsset: 'assets/onboarding/Manager Desk.svg',
+      svgAssetLight: 'assets/onboarding/manager-desk-dark.svg',
+      svgAssetDark: 'assets/onboarding/manager-desk-light.svg',
       titleKey: 'onboardingTitle3',
       subtitleKey: 'onboardingDesc3',
     ),
