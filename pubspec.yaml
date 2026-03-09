@@ -108,6 +108,7 @@ flutter:
     - assets/images/cover_images/
     - assets/images/logo/
     - assets/onboarding/
+    - assets/svgs/
     - .env
   #   - images/a_dot_ham.jpeg
 
