@@ -4,6 +4,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:provider/provider.dart';
 import 'package:smooth_page_indicator/smooth_page_indicator.dart';
 
+import '../constants/text_styles.dart';
 import '../view_models/onboarding_viewmodel.dart';
 import 'auth_page.dart';
 
@@ -20,9 +21,6 @@ class _OnboardingPageState extends State<OnboardingPage>
   late PageController _pageController;
   late AnimationController _fadeController;
   late Animation<double> _fadeAnimation;
-
-  // Primary color for the onboarding
-  static const Color _primaryColor = Color(0xFFB71C1C); // ECU Red
 
   @override
   void initState() {
@@ -122,9 +120,10 @@ class _OnboardingPageState extends State<OnboardingPage>
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
+    final colorScheme = Theme.of(context).colorScheme;
     
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: colorScheme.surface,
       body: Consumer<OnboardingViewModel>(
         builder: (context, viewModel, child) {
           return SafeArea(
@@ -143,9 +142,8 @@ class _OnboardingPageState extends State<OnboardingPage>
                             : () => _skipOnboarding(viewModel),
                         child: Text(
                           l10n.skip,
-                          style: TextStyle(
-                            color: Colors.grey.shade600,
-                            fontSize: 16,
+                          style: AppTextStyles.bodyText1.copyWith(
+                            color: colorScheme.inversePrimary,
                           ),
                         ),
                       ),
@@ -165,6 +163,7 @@ class _OnboardingPageState extends State<OnboardingPage>
                           title: _getLocalizedTitle(l10n, index),
                           subtitle: _getLocalizedSubtitle(l10n, index),
                           isActive: index == viewModel.currentPage,
+                          colorScheme: colorScheme,
                         );
                       },
                     ),
@@ -177,8 +176,8 @@ class _OnboardingPageState extends State<OnboardingPage>
                       controller: _pageController,
                       count: viewModel.pages.length,
                       effect: ExpandingDotsEffect(
-                        activeDotColor: _primaryColor,
-                        dotColor: Colors.grey.shade300,
+                        activeDotColor: colorScheme.error,
+                        dotColor: colorScheme.inversePrimary.withValues(alpha: 0.3),
                         dotHeight: 10,
                         dotWidth: 10,
                         expansionFactor: 3,
@@ -198,12 +197,12 @@ class _OnboardingPageState extends State<OnboardingPage>
                             ? null
                             : () => _nextPage(viewModel),
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: _primaryColor,
+                          backgroundColor: colorScheme.error,
                           foregroundColor: Colors.white,
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(16),
                           ),
-                          elevation: 2,
+                          elevation: 0,
                         ),
                         child: viewModel.isCompleting
                             ? const SizedBox(
@@ -221,9 +220,8 @@ class _OnboardingPageState extends State<OnboardingPage>
                                     viewModel.isLastPage
                                         ? l10n.getStarted
                                         : l10n.next,
-                                    style: const TextStyle(
-                                      fontSize: 18,
-                                      fontWeight: FontWeight.w600,
+                                    style: AppTextStyles.subtitle1bold.copyWith(
+                                      color: Colors.white,
                                     ),
                                   ),
                                   if (!viewModel.isLastPage) ...[
@@ -251,12 +249,14 @@ class _OnboardingPageContent extends StatefulWidget {
   final String title;
   final String subtitle;
   final bool isActive;
+  final ColorScheme colorScheme;
 
   const _OnboardingPageContent({
     required this.svgAsset,
     required this.title,
     required this.subtitle,
     required this.isActive,
+    required this.colorScheme,
   });
 
   @override
@@ -339,10 +339,8 @@ class _OnboardingPageContentState extends State<_OnboardingPageContent>
               opacity: _animationController,
               child: Text(
                 widget.title,
-                style: const TextStyle(
-                  fontSize: 28,
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xFF1A1A1A),
+                style: AppTextStyles.headline2.copyWith(
+                  color: widget.colorScheme.primary,
                   height: 1.2,
                 ),
                 textAlign: TextAlign.center,
@@ -362,9 +360,8 @@ class _OnboardingPageContentState extends State<_OnboardingPageContent>
               ),
               child: Text(
                 widget.subtitle,
-                style: TextStyle(
-                  fontSize: 16,
-                  color: Colors.grey.shade600,
+                style: AppTextStyles.bodyText1.copyWith(
+                  color: widget.colorScheme.inversePrimary,
                   height: 1.5,
                 ),
                 textAlign: TextAlign.center,
