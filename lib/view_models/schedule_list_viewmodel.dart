@@ -41,12 +41,18 @@ class ScheduleListViewModel extends ChangeNotifier {
   /// Get schedules for a specific date
   List<Schedule> getSchedulesForDate(DateTime date) {
     final dayOfWeek = _convertToDayOfWeek(date);
-    return _weekSchedule[dayOfWeek] ?? [];
+    final schedules = _weekSchedule[dayOfWeek] ?? [];
+    // Sort chronologically by start time (earliest first)
+    schedules.sort((a, b) => a.compareStartTime(b));
+    return schedules;
   }
 
   /// Get schedules for a specific day number (1-7)
   List<Schedule> getSchedulesForDay(int dayOfWeek) {
-    return _weekSchedule[dayOfWeek] ?? [];
+    final schedules = _weekSchedule[dayOfWeek] ?? [];
+    // Sort chronologically by start time (earliest first)
+    schedules.sort((a, b) => a.compareStartTime(b));
+    return schedules;
   }
 
   /// Convert DateTime to Egyptian day of week (1 = Saturday, ..., 7 = Friday)

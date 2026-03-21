@@ -43,7 +43,11 @@ class _AuthProcessingPageState extends State<AuthProcessingPage>
     super.initState();
     _setupShimmerAnimation();
     _startMessageRotation();
-    _initializeAuth();
+    // Defer auth initialization until after the first frame is built
+    // This prevents "setState() called during build" errors
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _initializeAuth();
+    });
   }
 
   void _setupShimmerAnimation() {

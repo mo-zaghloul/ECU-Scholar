@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../utils/time_utils.dart';
 
 class Schedule {
   final String courseCode;
@@ -62,6 +63,11 @@ class Schedule {
       default:
         return const Color(0xFFB71C1C); // Dark red for other types
     }
+  }
+
+  /// Compare start times for sorting (earlier time = higher priority)
+  int compareStartTime(Schedule other) {
+    return compareTimeStrings(startTime, other.startTime);
   }
 }
 
