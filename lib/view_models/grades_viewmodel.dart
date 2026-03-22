@@ -111,12 +111,16 @@ class GradesViewModel extends ChangeNotifier {
   }
 
   /// Calculate total credit hours for a semester
+  /// NOTE: Currently commented out - using backend credits from SemesterGpa instead
+  /// Kept for potential future use if local calculation is needed
+  /*
   double getTotalHoursForSemester(String semester) {
     final grades = _gradesBySemester[semester] ?? [];
     return grades.fold(0.0, (sum, g) => sum + g.creditHours);
   }
+  */
 
-  /// Get GPA for a specific semester
+  /// Get GPA for a specific semester (returns GPA value only)
   double? getGpaForSemester(String academicYear, String semester) {
     final semesterGpa = _gpaSummary.bySemester.firstWhere(
       (s) => s.academicYear == academicYear && s.semester == semester,
@@ -128,5 +132,16 @@ class GradesViewModel extends ChangeNotifier {
       ),
     );
     return semesterGpa.gpa > 0 ? semesterGpa.gpa : null;
+  }
+
+  /// Get full semester GPA data (returns SemesterGpa object with GPA and credits)
+  SemesterGpa? getSemesterGpaData(String academicYear, String semester) {
+    try {
+      return _gpaSummary.bySemester.firstWhere(
+        (s) => s.academicYear == academicYear && s.semester == semester,
+      );
+    } catch (_) {
+      return null; // Return null if not found instead of throwing
+    }
   }
 }

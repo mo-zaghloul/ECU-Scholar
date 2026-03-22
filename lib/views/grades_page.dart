@@ -205,11 +205,14 @@ class _GradesPageState extends State<GradesPage> {
     final colorScheme = Theme.of(context).colorScheme;
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final grades = viewModel.gradesBySemester[semester] ?? [];
-    final totalHours = viewModel.getTotalHoursForSemester(semester);
-    final semesterGpa = viewModel.getGpaForSemester(
+    
+    // Get semester GPA data (includes both GPA and credit hours from backend)
+    final semesterGpaData = viewModel.getSemesterGpaData(
       viewModel.selectedAcademicYear ?? '',
       semester,
     );
+    final totalHours = semesterGpaData?.credits ?? 0.0;
+    final semesterGpa = semesterGpaData?.gpa;
 
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -235,7 +238,7 @@ class _GradesPageState extends State<GradesPage> {
               ),
             ),
             child: Text(
-              '$semester ${viewModel.selectedAcademicYear?.split('/').first ?? ''}',
+              _getSemesterYearLabel(semester, viewModel.selectedAcademicYear),
               style: GoogleFonts.almarai(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
@@ -428,5 +431,22 @@ class _GradesPageState extends State<GradesPage> {
         ],
       ),
     );
+  }
+
+  /// Get semester label with correct academic year part
+  /// Fall → First year (2023/2024 → 2023)
+  /// Spring → Second year (2023/2024 → 2024)
+  String _getSemesterYearLabel(String semester, String? academicYear) {
+    if (academicYear == null || academicYear.isEmpty) {
+      return semester;
+    }
+    
+    final yearParts = academicYear.split('/');
+    if (yearParts.length != 2) {
+      return '$semester $academicYear';
+    }
+    
+    final displayYear = semester == 'Fall' ? yearParts[0] : yearParts[1];
+    return '$semester $displayYear';
   }
 }
