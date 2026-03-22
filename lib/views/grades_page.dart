@@ -270,7 +270,7 @@ class _GradesPageState extends State<GradesPage> {
                 SizedBox(
                   width: 40,
                   child: Text(
-                    'Grd',
+                    'Grade',
                     textAlign: TextAlign.center,
                     style: GoogleFonts.almarai(
                       fontSize: 12,
@@ -279,18 +279,18 @@ class _GradesPageState extends State<GradesPage> {
                     ),
                   ),
                 ),
-                SizedBox(
-                  width: 40,
-                  child: Text(
-                    'Hrs',
-                    textAlign: TextAlign.center,
-                    style: GoogleFonts.almarai(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.grey,
-                    ),
-                  ),
-                ),
+                // SizedBox(
+                //   width: 40,
+                //   child: Text(
+                //     'Hrs',
+                //     textAlign: TextAlign.center,
+                //     style: GoogleFonts.almarai(
+                //       fontSize: 12,
+                //       fontWeight: FontWeight.w600,
+                //       color: Colors.grey,
+                //     ),
+                //   ),
+                // ),
               ],
             ),
           ),
@@ -381,17 +381,17 @@ class _GradesPageState extends State<GradesPage> {
               ),
             ),
           ),
-          SizedBox(
-            width: 40,
-            child: Text(
-              grade.creditHours.toInt().toString(),
-              textAlign: TextAlign.center,
-              style: GoogleFonts.almarai(
-                fontSize: 14,
-                color: colorScheme.primary,
-              ),
-            ),
-          ),
+          // SizedBox(
+          //   width: 40,
+          //   child: Text(
+          //     grade.creditHours.toInt().toString(),
+          //     textAlign: TextAlign.center,
+          //     style: GoogleFonts.almarai(
+          //       fontSize: 14,
+          //       color: colorScheme.primary,
+          //     ),
+          //   ),
+          // ),
         ],
       ),
     );
