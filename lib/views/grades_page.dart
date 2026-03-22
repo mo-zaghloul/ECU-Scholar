@@ -3,6 +3,7 @@ import 'package:ecu_scholar/view_models/student_viewmodel.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
+import 'dart:ui';
 
 class GradesPage extends StatefulWidget {
   const GradesPage({super.key});
@@ -12,6 +13,8 @@ class GradesPage extends StatefulWidget {
 }
 
 class _GradesPageState extends State<GradesPage> {
+  bool _isGradesBlurred = false;
+
   @override
   void initState() {
     super.initState();
@@ -38,6 +41,22 @@ class _GradesPageState extends State<GradesPage> {
         elevation: 0,
         backgroundColor: colorScheme.surface,
         foregroundColor: colorScheme.primary,
+        actions: [
+          IconButton(
+            icon: Padding(
+              padding: const EdgeInsets.only(right: 12.0),
+              child: Icon(
+                _isGradesBlurred ? Icons.visibility_off : Icons.visibility,
+              ),
+            ),
+            onPressed: () {
+              setState(() {
+                _isGradesBlurred = !_isGradesBlurred;
+              });
+            },
+            tooltip: _isGradesBlurred ? 'Show grades' : 'Hide grades for privacy',
+          ),
+        ],
       ),
       body: Consumer<GradesViewModel>(
         builder: (context, viewModel, child) {
@@ -52,6 +71,7 @@ class _GradesPageState extends State<GradesPage> {
                   viewModel.gpaSummary.cumulativeGpa,
                   viewModel.gpaSummary.totalCredits,
                   viewModel.gpaState == GradesLoadingState.loading,
+                  _isGradesBlurred,
                 ),
 
                 const SizedBox(height: 24),
@@ -75,6 +95,7 @@ class _GradesPageState extends State<GradesPage> {
                       context,
                       viewModel,
                       semester,
+                      _isGradesBlurred,
                     ),
                   ),
 
@@ -92,6 +113,7 @@ class _GradesPageState extends State<GradesPage> {
     double gpa,
     double totalCredits,
     bool isLoading,
+    bool isBlurred,
   ) {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16),
@@ -128,24 +150,27 @@ class _GradesPageState extends State<GradesPage> {
                   ),
                 ),
                 const SizedBox(height: 8),
-                Text(
+                _blurredText(
                   gpa.toStringAsFixed(2),
-                  style: GoogleFonts.almarai(
+                  isBlurred,
+                  GoogleFonts.almarai(
                     fontSize: 48,
                     fontWeight: FontWeight.bold,
                     color: Colors.white,
                   ),
+                  blurSigma: 8,
                 ),
                 const SizedBox(height: 4),
-                Text(
-                  'Hours: ${totalCredits.toInt()}',
-                  style: GoogleFonts.almarai(
-                    fontSize: 13,
-                    color: Colors.white.withValues(alpha: 0.8),
-                  ),
+                    _blurredText(
+                      'Hours: ${totalCredits.toInt()}',
+                      isBlurred,
+                      GoogleFonts.almarai(
+                        fontSize: 13,
+                        color: Colors.white.withValues(alpha: 0.8),
+                      ),
+                    ),
+                  ],
                 ),
-              ],
-            ),
     );
   }
 
@@ -201,6 +226,7 @@ class _GradesPageState extends State<GradesPage> {
     BuildContext context,
     GradesViewModel viewModel,
     String semester,
+    bool isBlurred,
   ) {
     final colorScheme = Theme.of(context).colorScheme;
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -299,7 +325,7 @@ class _GradesPageState extends State<GradesPage> {
           ),
 
           // Grade Rows
-          ...grades.map((grade) => _buildGradeRow(context, grade)),
+          ...grades.map((grade) => _buildGradeRow(context, grade, isBlurred)),
 
           // Total Row
           Container(
@@ -316,26 +342,52 @@ class _GradesPageState extends State<GradesPage> {
                 Expanded(
                   flex: 5,
                   child: semesterGpa != null
-                      ? Text(
-                          'GPA: ${semesterGpa.toStringAsFixed(2)}',
-                          style: GoogleFonts.almarai(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w600,
-                            color: colorScheme.primary,
-                          ),
+                      ? Row(
+                          children: [
+                            Text(
+                              'GPA: ',
+                              style: GoogleFonts.almarai(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w600,
+                                color: colorScheme.primary,
+                              ),
+                            ),
+                            _blurredText(
+                              semesterGpa.toStringAsFixed(2),
+                              isBlurred,
+                              GoogleFonts.almarai(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w600,
+                                color: colorScheme.primary,
+                              ),
+                            ),
+                          ],
                         )
                       : const SizedBox.shrink(),
                 ),
                 SizedBox(
                   width: 80,
-                  child: Text(
-                    'Hours: ${totalHours.toInt()}',
-                    textAlign: TextAlign.right,
-                    style: GoogleFonts.almarai(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                      color: colorScheme.primary,
-                    ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      Text(
+                        'Hours: ',
+                        style: GoogleFonts.almarai(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: colorScheme.primary,
+                        ),
+                      ),
+                      _blurredText(
+                        totalHours.toInt().toString(),
+                        isBlurred,
+                        GoogleFonts.almarai(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: colorScheme.primary,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ],
@@ -346,7 +398,7 @@ class _GradesPageState extends State<GradesPage> {
     );
   }
 
-  Widget _buildGradeRow(BuildContext context, grade) {
+  Widget _buildGradeRow(BuildContext context, grade, bool isBlurred) {
     final colorScheme = Theme.of(context).colorScheme;
 
     return Container(
@@ -373,11 +425,11 @@ class _GradesPageState extends State<GradesPage> {
             ),
           ),
           SizedBox(
-            width: 40,
-            child: Text(
+            width: 20,
+            child: _blurredText(
               grade.gradeLetter,
-              textAlign: TextAlign.center,
-              style: GoogleFonts.almarai(
+              isBlurred,
+              GoogleFonts.almarai(
                 fontSize: 14,
                 fontWeight: FontWeight.bold,
                 color: grade.gradeColor,
@@ -397,6 +449,15 @@ class _GradesPageState extends State<GradesPage> {
           // ),
         ],
       ),
+    );
+  }
+
+  Widget _blurredText(String text, bool isBlurred, TextStyle style, {double blurSigma = 5}) {
+    return ImageFiltered(
+      imageFilter: isBlurred
+          ? ImageFilter.blur(sigmaX: blurSigma, sigmaY: blurSigma)
+          : ImageFilter.blur(sigmaX: 0, sigmaY: 0),
+      child: Text(text, style: style),
     );
   }
 
