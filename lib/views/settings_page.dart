@@ -70,7 +70,7 @@ class _SettingsPageState extends State<SettingsPage> {
 
   Future<void> _openInstapayLink() async {
     // Replace with your actual Instapay link
-    final Uri url = Uri.parse('https://ipn.eg/S/mohzagh/instapay/hsoECg');
+    final Uri url = Uri.parse('https://ipn.eg/S/ecuscholar/instapay/hsoECg');
     if (await canLaunchUrl(url)) {
       await launchUrl(url, mode: LaunchMode.externalApplication);
     }
