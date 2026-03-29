@@ -8,6 +8,7 @@ import 'package:ecu_scholar/views/auth_page.dart';
 import 'package:ecu_scholar/views/onboarding_page.dart';
 import 'package:ecu_scholar/themes/theme_provider.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:ecu_scholar/l10n/app_localizations.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
@@ -16,6 +17,12 @@ import 'view_models/schedule_list_viewmodel.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  
+  // Lock orientation to portrait
+  await SystemChrome.setPreferredOrientations([
+    DeviceOrientation.portraitUp,
+    DeviceOrientation.portraitDown,
+  ]);
   
   // Load environment variables
   await dotenv.load(fileName: '.env');
