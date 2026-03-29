@@ -34,7 +34,11 @@ class _SchedulePageState extends State<SchedulePage> {
     _baseDate = DateTime.now();
     _currentPageIndex = _initialPage;
     _pageController = PageController(initialPage: _initialPage);
-    _loadData();
+    
+    // Defer data loading to after first frame to ensure context is ready
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _loadData();
+    });
   }
 
   @override
@@ -44,13 +48,17 @@ class _SchedulePageState extends State<SchedulePage> {
   }
 
   Future<void> _loadData() async {
-    // Fetch student data if not already loaded (for returning users)
-    final studentViewModel = Provider.of<StudentViewModel>(context, listen: false);
-    if (studentViewModel.loadingState != StudentLoadingState.loaded) {
-      studentViewModel.fetchStudentData();
+    try {
+      // Fetch student data if not already loaded (for returning users)
+      final studentViewModel = Provider.of<StudentViewModel>(context, listen: false);
+      if (studentViewModel.loadingState != StudentLoadingState.loaded) {
+        await studentViewModel.fetchStudentData();
+      }
+      // Fetch schedules
+      await fetchSchedules();
+    } catch (e) {
+      debugPrint('Error loading data: $e');
     }
-    // Fetch schedules
-    await fetchSchedules();
   }
 
   Future<void> fetchSchedules() async {

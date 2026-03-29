@@ -193,11 +193,6 @@ class _AuthWebViewPageState extends State<AuthWebViewPage> {
           onPressed: () => Navigator.pop(context, false),
         ),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.check),
-            onPressed: _checkForSessionCookie,
-            tooltip: 'Get Session Token',
-          ),
           if (kIsWeb)
             IconButton(
               icon: const Icon(Icons.edit),

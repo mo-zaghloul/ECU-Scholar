@@ -26,11 +26,13 @@ class ScheduleListViewModel extends ChangeNotifier {
     try {
       // Create fresh API service instance to ensure latest auth headers are used
       final apiService = BackendApiService();
+      debugPrint('ScheduleListViewModel: Fetching schedules...');
       _weekSchedule = await apiService.fetchWeekSchedule();
       _loadingState = LoadingState.loaded;
+      debugPrint('ScheduleListViewModel: Schedules loaded successfully (${_weekSchedule.length} days)');
       notifyListeners();
     } catch (e) {
-      debugPrint('Error fetching schedules: $e');
+      debugPrint('ScheduleListViewModel: Error fetching schedules: $e');
       _errorMessage = e.toString();
       _loadingState = LoadingState.error;
       _weekSchedule = {};

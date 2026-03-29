@@ -26,15 +26,17 @@ class StudentViewModel extends ChangeNotifier {
     _loadingState = StudentLoadingState.loading;
     _errorMessage = null;
     notifyListeners();
+    debugPrint('StudentViewModel: Fetching student data...');
 
     try {
       // Create fresh API service instance to ensure latest auth headers are used
       final apiService = BackendApiService();
       _studentData = await apiService.fetchStudentData();
       _loadingState = StudentLoadingState.loaded;
+      debugPrint('StudentViewModel: Student data loaded - ${_studentData.name}');
       notifyListeners();
     } catch (e) {
-      debugPrint('Error fetching student data: $e');
+      debugPrint('StudentViewModel: Error fetching student data: $e');
       _errorMessage = e.toString();
       _loadingState = StudentLoadingState.error;
       notifyListeners();
