@@ -20,8 +20,16 @@ class AuthInitResponse {
   });
 
   factory AuthInitResponse.fromJson(Map<String, dynamic> json) {
+    // Handle student as either an object or an array
+    dynamic studentData = json['student'] ?? {};
+    if (studentData is List && studentData.isNotEmpty) {
+      studentData = studentData.first; // Extract first student if it's an array
+    }
+    
     return AuthInitResponse(
-      student: Student.fromJson(json['student'] ?? {}),
+      student: Student.fromJson(studentData is Map<String, dynamic> 
+          ? studentData 
+          : (studentData as Map).cast<String, dynamic>()),
       scraped: (json['scraped'] as List<dynamic>?)
               ?.map((e) => e.toString())
               .toList() ??
@@ -128,7 +136,12 @@ class BackendApiService {
         final days = response.data['days'] as List<dynamic>? ?? [];
         
         for (final dayData in days) {
-          final dayNum = dayData['day'] as int;
+          // Handle day as either int or string
+          final dayValue = dayData['day'];
+          final dayNum = dayValue is int ? dayValue : int.tryParse(dayValue.toString()) ?? 0;
+          
+          if (dayNum == 0) continue; // Skip invalid days
+          
           final classes = (dayData['classes'] as List<dynamic>?) ?? [];
           
           weekSchedule[dayNum] = classes
