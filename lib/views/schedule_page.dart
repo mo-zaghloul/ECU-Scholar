@@ -8,6 +8,7 @@ import 'package:provider/provider.dart';
 import '../view_models/schedule_list_viewmodel.dart';
 import '../view_models/student_viewmodel.dart';
 import '../widgets/shimmer_loading.dart';
+import '../widgets/date_picker_dialog.dart' as custom_dialog;
 import '../utils/schedule_tile.dart';
 import '../constants/text_styles.dart';
 import '../widgets/empty_schedulelist_widget.dart';
@@ -32,7 +33,9 @@ class _SchedulePageState extends State<SchedulePage> {
   @override
   void initState() {
     super.initState();
-    _baseDate = DateTime.now();
+    // Normalize to midnight to avoid time-based offset errors
+    final now = DateTime.now();
+    _baseDate = DateTime(now.year, now.month, now.day);
     _currentPageIndex = _initialPage;
     _pageController = PageController(initialPage: _initialPage);
 
@@ -92,6 +95,39 @@ class _SchedulePageState extends State<SchedulePage> {
     return date.year == now.year &&
         date.month == now.month &&
         date.day == now.day;
+  }
+
+  /// Show date picker dialog and jump to selected date
+  Future<void> _openDatePicker() async {
+    final minDate = _baseDate.subtract(Duration(days: _initialPage));
+    final maxDate = _baseDate.add(Duration(days: _daysToShow - _initialPage - 1));
+
+    final selectedDate = await showDialog<DateTime>(
+      context: context,
+      builder: (context) => custom_dialog.DatePickerDialog(
+        initialDate: _currentDate,
+        minDate: minDate,
+        maxDate: maxDate,
+      ),
+    );
+
+    if (selectedDate != null) {
+      // Normalize selected date to midnight
+      final normalizedSelected = DateTime(selectedDate.year, selectedDate.month, selectedDate.day);
+      
+      // Calculate the page index - both dates are now at midnight so difference is exact
+      final offset = normalizedSelected.difference(_baseDate).inDays;
+      final pageIndex = _initialPage + offset + 1;
+
+      // Animate to the selected date's page
+      await _pageController.animateToPage(
+        pageIndex,
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeInOut,
+      );
+
+      debugPrint('Jumped to date: ${_getFormattedDate(normalizedSelected)} (page $pageIndex)');
+    }
   }
 
   @override
@@ -173,44 +209,48 @@ class _SchedulePageState extends State<SchedulePage> {
     final date = _currentDate;
     final isToday = _isToday(date);
     
-    return Padding(
-      padding: const EdgeInsets.only(top: 14, bottom: 12, right: 12.0, left: 12.0),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Row(
-            children: [
-              Text(
-                _getDayName(date),
-                style: AppTextStyles.headline1,
-              ),
-              if (isToday) ...[
-                const SizedBox(width: 8),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                  decoration: BoxDecoration(
-                    color: Theme.of(context).colorScheme.error,
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Text(
-                    'Today',
-                    style: GoogleFonts.almarai(
-                      fontSize: 12,
-                      color: Colors.white,
-                      fontWeight: FontWeight.w500,
+    return InkWell(
+      onTap: _openDatePicker,
+      borderRadius: BorderRadius.circular(12),
+      child: Padding(
+        padding: const EdgeInsets.only(top: 14, bottom: 12, right: 12.0, left: 12.0),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Row(
+              children: [
+                Text(
+                  _getDayName(date),
+                  style: AppTextStyles.headline1,
+                ),
+                if (isToday) ...[
+                  const SizedBox(width: 8),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).colorScheme.error,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Text(
+                      'Today',
+                      style: GoogleFonts.almarai(
+                        fontSize: 12,
+                        color: Colors.white,
+                        fontWeight: FontWeight.w500,
+                      ),
                     ),
                   ),
-                ),
+                ],
               ],
-            ],
-          ),
-          Text(
-            _getFormattedDate(date),
-            style: AppTextStyles.bodyText1.copyWith(
-              color: Theme.of(context).colorScheme.error,
             ),
-          ),
-        ],
+            Text(
+              _getFormattedDate(date),
+              style: AppTextStyles.bodyText1.copyWith(
+                color: Theme.of(context).colorScheme.error,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

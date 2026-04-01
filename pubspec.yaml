@@ -48,6 +48,7 @@ dependencies:
   flutter_svg: ^2.0.10+1
   smooth_page_indicator: ^1.2.0+3
   shimmer: ^3.0.0
+  table_calendar: ^3.0.9
   package_info_plus: ^8.0.0
   url_launcher: ^6.2.5
 
