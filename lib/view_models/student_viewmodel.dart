@@ -5,19 +5,18 @@ import '../services/remote_data_service/remote_data_service.dart';
 enum StudentLoadingState { initial, loading, loaded, error }
 
 class StudentViewModel extends ChangeNotifier {
-  Student _studentData = Student(
-    name: 'N/A',
-    faculty: 'N/A',
-    gpa: 'N/A',
-    id: 'N/A',
-    // degree: 'N/A',
-    // major: 'N/A',
-    // level: 'N/A',
-    // totalPassedHours: 'N/A',
-  );
+  Student _studentData = Student.empty();
   StudentLoadingState _loadingState = StudentLoadingState.initial;
   String? _errorMessage;
-  final BackendApiService _apiService = BackendApiService();
+
+  /// Set student data directly (used after auth/init)
+  void setStudent(Student student) {
+    _studentData = student;
+    _loadingState = StudentLoadingState.loaded;
+    _errorMessage = null;
+    notifyListeners();
+    debugPrint('StudentViewModel: Student data set - ${student.name}');
+  }
 
   StudentLoadingState get loadingState => _loadingState;
   String? get errorMessage => _errorMessage;
@@ -27,13 +26,17 @@ class StudentViewModel extends ChangeNotifier {
     _loadingState = StudentLoadingState.loading;
     _errorMessage = null;
     notifyListeners();
+    debugPrint('StudentViewModel: Fetching student data...');
 
     try {
-      _studentData = await _apiService.fetchStudentData();
+      // Create fresh API service instance to ensure latest auth headers are used
+      final apiService = BackendApiService();
+      _studentData = await apiService.fetchStudentData();
       _loadingState = StudentLoadingState.loaded;
+      debugPrint('StudentViewModel: Student data loaded - ${_studentData.name}');
       notifyListeners();
     } catch (e) {
-      debugPrint('Error fetching student data: $e');
+      debugPrint('StudentViewModel: Error fetching student data: $e');
       _errorMessage = e.toString();
       _loadingState = StudentLoadingState.error;
       notifyListeners();

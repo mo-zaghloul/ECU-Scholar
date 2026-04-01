@@ -1,5 +1,9 @@
+import 'dart:ui';
+
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 
 import '../view_models/auth_viewmodel.dart';
@@ -50,12 +54,14 @@ class _AuthPageState extends State<AuthPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.black,
       body: Consumer<AuthViewModel>(
         builder: (context, authViewModel, child) {
           // Handle different auth states
           switch (authViewModel.state) {
             case AuthState.loading:
             case AuthState.initial:
+            case AuthState.processing:
               return const Center(
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
@@ -93,123 +99,171 @@ class _AuthPageState extends State<AuthPage> {
   }
 
   Widget _buildLoginContent(BuildContext context, AuthViewModel authViewModel) {
-    return SafeArea(
-      child: Center(
+    return Container(
+      width: double.infinity,
+      height: double.infinity,
+      color: const Color(0xFF000000),
+      child: SafeArea(
+        bottom: false,
         child: SingleChildScrollView(
-          padding: const EdgeInsets.all(24.0),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              // App Logo/Icon
-              Container(
-                padding: const EdgeInsets.all(24),
-                decoration: BoxDecoration(
-                  color: Theme.of(context).colorScheme.primaryContainer,
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(
-                  Icons.school,
-                  size: 80,
-                  color: Theme.of(context).colorScheme.primary,
-                ),
-              ),
-              const SizedBox(height: 32),
-              
-              // App Title
-              Text(
-                'ECU Scholar',
-                style: Theme.of(context).textTheme.headlineLarge?.copyWith(
-                  fontWeight: FontWeight.bold,
-                  color: Theme.of(context).colorScheme.primary,
-                ),
-              ),
-              const SizedBox(height: 8),
-              
-              Text(
-                'Login with your ECU SIS account',
-                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                  color: Colors.grey.shade600,
-                ),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 48),
+          padding: const EdgeInsets.symmetric(horizontal: 32.0),
+          child: ConstrainedBox(
+            constraints: BoxConstraints(
+              minHeight: MediaQuery.of(context).size.height - 
+                  MediaQuery.of(context).padding.top,
+            ),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const SizedBox(height: 1),
 
-              // Error message if any
-              if (authViewModel.state == AuthState.error && 
-                  authViewModel.errorMessage != null) ...[
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: Colors.red.shade50,
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: Colors.red.shade200),
-                  ),
-                  child: Row(
-                    children: [
-                      Icon(Icons.error_outline, color: Colors.red.shade700, size: 20),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: Text(
-                          authViewModel.errorMessage!,
-                          style: TextStyle(color: Colors.red.shade700, fontSize: 13),
+                // Main content column
+                Column(
+                  children: [
+                    // Logo and text group
+                    Column(
+                      children: [
+                        // Large centered logo
+                        SvgPicture.asset(
+                          'assets/images/logo/dark-theme-no-bg.svg',
+                          height: 170,
+                          width: 170,
+                        ),
+                        const SizedBox(height: 12),
+
+                        // App name with serif display font
+                        Text(
+                          'ECU Scholar',
+                          style: GoogleFonts.dmSerifDisplay(
+                            fontSize: 42,
+                            fontWeight: FontWeight.w700,
+                            color: Colors.white,
+                            letterSpacing: 2,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+
+                        // Tagline with modern sans-serif
+                        Text(
+                          'Your university life, finally organized.',
+                          style: GoogleFonts.inter(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w400,
+                            color: Colors.white.withValues(alpha: 0.6),
+                            letterSpacing: 0.3,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                      ],
+                    ),
+                    
+                    const SizedBox(height: 48),
+
+                    // Error message if any
+                    if (authViewModel.state == AuthState.error &&
+                        authViewModel.errorMessage != null) ...[
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(16),
+                        child: BackdropFilter(
+                          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                          child: Container(
+                            padding: const EdgeInsets.all(16),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFCE1407).withValues(alpha: 0.15),
+                              borderRadius: BorderRadius.circular(16),
+                              border: Border.all(
+                                color: const Color(0xFFCE1407).withValues(alpha: 0.3),
+                              ),
+                            ),
+                            child: Row(
+                              children: [
+                                const Icon(Icons.error_outline, 
+                                  color: Color(0xFFCE1407), size: 22),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Text(
+                                    authViewModel.errorMessage!,
+                                    style: GoogleFonts.inter(
+                                      fontSize: 14,
+                                      color: Colors.white.withValues(alpha: 0.9),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
                         ),
                       ),
+                      const SizedBox(height: 24),
                     ],
-                  ),
-                ),
-                const SizedBox(height: 24),
-              ],
 
-              // Login Button
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton.icon(
-                  onPressed: _openAuthBrowser,
-                  icon: const Icon(Icons.login),
-                  label: const Text('Login to ECU SIS'),
-                  style: ElevatedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    textStyle: const TextStyle(fontSize: 16),
-                  ),
-                ),
-              ),
-              
-              // Web platform notice
-              if (kIsWeb) ...[
-                const SizedBox(height: 24),
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: Colors.amber.shade50,
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: Colors.amber.shade200),
-                  ),
-                  child: const Row(
-                    children: [
-                      Icon(Icons.info_outline, color: Colors.amber, size: 20),
-                      SizedBox(width: 8),
-                      Flexible(
-                        child: Text(
-                          'On web, you may need to enter the session token manually.',
-                          style: TextStyle(fontSize: 12),
+                    // Login Button
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(29),
+                      child: BackdropFilter(
+                        filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                        child: Container(
+                          width: double.infinity,
+                          height: 58,
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFCE1407),
+                            borderRadius: BorderRadius.circular(29),
+                            boxShadow: [
+                              BoxShadow(
+                                color: const Color(0xFFC61D28).withValues(alpha: 0.4),
+                                blurRadius: 20,
+                                offset: const Offset(0, 8),
+                              ),
+                            ],
+                          ),
+                          child: Material(
+                            color: Colors.transparent,
+                            child: InkWell(
+                              onTap: _openAuthBrowser,
+                              borderRadius: BorderRadius.circular(29),
+                              child: Center(
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    const Icon(Icons.login_rounded, 
+                                      color: Colors.white, size: 22),
+                                    const SizedBox(width: 12),
+                                    Text(
+                                      'Login with ECU SIS',
+                                      style: GoogleFonts.inter(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.w600,
+                                        color: Colors.white,
+                                        letterSpacing: 0.5,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
                         ),
                       ),
-                    ],
+                    ),
+                  ],
+                ),
+
+                // Footer terms text
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 32.0),
+                  child: Text(
+                    'By continuing you agree to the\nTerms of Service and Privacy Policy',
+                    style: GoogleFonts.inter(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w400,
+                      color: Colors.white.withValues(alpha: 0.4),
+                      height: 1.6,
+                    ),
+                    textAlign: TextAlign.center,
                   ),
                 ),
               ],
-              
-              const SizedBox(height: 48),
-              
-              // Help text
-              Text(
-                'By logging in, you agree to allow this app to access your ECU SIS data.',
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: Colors.grey.shade500,
-                ),
-                textAlign: TextAlign.center,
-              ),
-            ],
+            ),
           ),
         ),
       ),

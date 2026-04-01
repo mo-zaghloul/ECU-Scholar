@@ -1,9 +1,8 @@
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
-import 'package:provider/provider.dart';
 
-import '../view_models/auth_viewmodel.dart';
+import 'auth_processing_page.dart';
 
 /// WebView page for ECU SIS authentication.
 /// Opens the ECU login page and extracts the session token after successful login.
@@ -17,6 +16,7 @@ class AuthWebViewPage extends StatefulWidget {
 class _AuthWebViewPageState extends State<AuthWebViewPage> {
   static const String _targetUrl = 'https://sis.ecu.edu.eg/UI/StudentView/Home.aspx';
   static const String _cookieDomain = 'https://sis.ecu.edu.eg';
+  static const String _successRedirectPath = 'DefaultAAD.aspx';
   
   InAppWebViewController? _webViewController;
   final CookieManager _cookieManager = CookieManager.instance();
@@ -24,6 +24,7 @@ class _AuthWebViewPageState extends State<AuthWebViewPage> {
   bool _isLoading = true;
   double _progress = 0;
   bool _hasInitialized = false;
+  bool _isProcessing = false;
 
   @override
   void initState() {
@@ -95,15 +96,64 @@ class _AuthWebViewPageState extends State<AuthWebViewPage> {
     }
   }
 
+  Future<void> _extractSessionTokenAndClose() async {
+    if (kIsWeb) {
+      if (mounted) {
+        _showWebPlatformSnackBar();
+      }
+      return;
+    }
+
+    try {
+      debugPrint('Extracting session token after Microsoft login...');
+      
+      // Check cookies from the domain
+      final cookies = await _cookieManager.getCookies(
+        url: WebUri(_cookieDomain),
+      );
+
+      debugPrint('Cookies found after login: ${cookies.length}');
+      for (final cookie in cookies) {
+        debugPrint('Cookie: ${cookie.name}');
+        if (cookie.name == 'ASP.NET_SessionId') {
+          debugPrint('Session token found! Navigating to processing page...');
+          await _saveAndClose(cookie.value);
+          return;
+        }
+      }
+
+      debugPrint('No session token found, trying fallback...');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Verifying session... Please wait.'),
+            duration: Duration(seconds: 2),
+          ),
+        );
+      }
+      
+      // Wait a bit more and try again
+      await Future.delayed(const Duration(seconds: 1));
+      await _checkForSessionCookie();
+    } catch (e) {
+      debugPrint('Error extracting session token: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error verifying session: $e')),
+        );
+      }
+    }
+  }
+
   Future<void> _saveAndClose(String token) async {
     if (!mounted) return;
     
-    final authViewModel = context.read<AuthViewModel>();
-    final success = await authViewModel.saveSessionToken(token);
-    
-    if (success && mounted) {
-      Navigator.of(context).pop(true);
-    }
+    // Navigate to the processing page which will call /auth/init
+    Navigator.of(context).pushReplacement(
+      MaterialPageRoute(
+        builder: (context) => AuthProcessingPage(sessionToken: token),
+      ),
+    );
   }
 
   void _showWebPlatformSnackBar() {
@@ -194,11 +244,6 @@ class _AuthWebViewPageState extends State<AuthWebViewPage> {
           onPressed: () => Navigator.pop(context, false),
         ),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.check),
-            onPressed: _checkForSessionCookie,
-            tooltip: 'Get Session Token',
-          ),
           if (kIsWeb)
             IconButton(
               icon: const Icon(Icons.edit),
@@ -223,7 +268,7 @@ class _AuthWebViewPageState extends State<AuthWebViewPage> {
             child: InAppWebView(
               initialUrlRequest: URLRequest(url: WebUri(_targetUrl)),
               initialSettings: InAppWebViewSettings(
-                useShouldOverrideUrlLoading: false,
+                useShouldOverrideUrlLoading: true,
                 javaScriptEnabled: true,
                 domStorageEnabled: true,
                 databaseEnabled: true,
@@ -243,6 +288,36 @@ class _AuthWebViewPageState extends State<AuthWebViewPage> {
               onWebViewCreated: (controller) {
                 _webViewController = controller;
               },
+              shouldOverrideUrlLoading: (controller, navigationAction) async {
+                final url = navigationAction.request.url.toString();
+                debugPrint('Navigation detected: $url');
+                
+                // Intercept the redirect TO Home.aspx (after DefaultAAD processes the code)
+                // This prevents the SIS page from rendering, but allows the auth code to be processed
+                if (url.contains('StudentView/Home.aspx') && _isProcessing) {
+                  debugPrint('Blocking Home.aspx to prevent SIS page from rendering...');
+                  
+                  // Wait a moment for cookies to settle
+                  await Future.delayed(const Duration(milliseconds: 300));
+                  await _extractSessionTokenAndClose();
+                  
+                  // Don't load the Home page
+                  return NavigationActionPolicy.CANCEL;
+                }
+                
+                // Allow DefaultAAD to load so it processes the auth code
+                if (url.contains(_successRedirectPath) && url.contains('code=') && !_isProcessing) {
+                  debugPrint('Microsoft redirect detected, allowing SIS to process auth code...');
+                  setState(() {
+                    _isProcessing = true;
+                  });
+                  // Let it load so the server processes the code
+                  return NavigationActionPolicy.ALLOW;
+                }
+                
+                // Allow all other navigations
+                return NavigationActionPolicy.ALLOW;
+              },
               onLoadStart: (controller, url) {
                 debugPrint('Loading: $url');
                 setState(() {
@@ -255,7 +330,7 @@ class _AuthWebViewPageState extends State<AuthWebViewPage> {
                   _isLoading = false;
                 });
 
-                // Check if we're on the home page after auth
+                // Check if we're on the home page after auth (fallback if interception fails)
                 if (url != null && url.toString().contains('StudentView/Home.aspx')) {
                   await _checkForSessionCookie();
                 }

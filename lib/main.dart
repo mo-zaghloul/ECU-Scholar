@@ -1,12 +1,14 @@
 import 'package:ecu_scholar/services/auth_service/auth_service.dart';
 import 'package:ecu_scholar/services/onboarding_service/onboarding_service.dart';
 import 'package:ecu_scholar/view_models/auth_viewmodel.dart';
+import 'package:ecu_scholar/view_models/grades_viewmodel.dart';
 import 'package:ecu_scholar/view_models/onboarding_viewmodel.dart';
 import 'package:ecu_scholar/view_models/student_viewmodel.dart';
 import 'package:ecu_scholar/views/auth_page.dart';
 import 'package:ecu_scholar/views/onboarding_page.dart';
 import 'package:ecu_scholar/themes/theme_provider.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:ecu_scholar/l10n/app_localizations.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
@@ -15,6 +17,12 @@ import 'view_models/schedule_list_viewmodel.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  
+  // Lock orientation to portrait
+  await SystemChrome.setPreferredOrientations([
+    DeviceOrientation.portraitUp,
+    DeviceOrientation.portraitDown,
+  ]);
   
   // Load environment variables
   await dotenv.load(fileName: '.env');
@@ -31,15 +39,39 @@ Future<void> main() async {
         ChangeNotifierProvider<OnboardingViewModel>(create: (context) => OnboardingViewModel()),
         ChangeNotifierProvider<ScheduleListViewModel>(create: (context) => ScheduleListViewModel()),
         ChangeNotifierProvider<StudentViewModel>(create: (context) => StudentViewModel()),
-        // Add more providers here as needed
+        ChangeNotifierProvider<GradesViewModel>(create: (context) => GradesViewModel()),
       ],
       child: const MyApp(),
     ),
   );
 }
 
-class MyApp extends StatelessWidget {
+class MyApp extends StatefulWidget {
   const MyApp({super.key});
+
+  @override
+  State<MyApp> createState() => _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangePlatformBrightness() {
+    // Update theme when system brightness changes
+    final brightness = View.of(context).platformDispatcher.platformBrightness;
+    context.read<ThemeProvider>().updateFromSystem(brightness);
+  }
 
   @override
   Widget build(BuildContext context) {

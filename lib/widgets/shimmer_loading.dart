@@ -3,15 +3,27 @@ import 'package:shimmer/shimmer.dart';
 
 /// Base shimmer colors for consistent theming
 class ShimmerColors {
-  static Color get baseColor => Colors.grey.shade300;
-  static Color get highlightColor => Colors.grey.shade100;
+  static Color baseColor(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return isDark ? const Color(0xFF252525) : Colors.grey.shade300;
+  }
+
+  static Color highlightColor(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return isDark ? const Color(0xFF3A3A3A) : Colors.grey.shade100;
+  }
+
+  static Color tileColor(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return isDark ? const Color(0xFF252525) : Colors.grey.shade200;
+  }
 }
 
 /// Shimmer loading widget for schedule list items
 class ScheduleShimmer extends StatelessWidget {
   final int itemCount;
 
-  const ScheduleShimmer({super.key, this.itemCount = 4});
+  const ScheduleShimmer({super.key, this.itemCount = 3});
 
   @override
   Widget build(BuildContext context) {
@@ -24,7 +36,7 @@ class ScheduleShimmer extends StatelessWidget {
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
             decoration: BoxDecoration(
-              color: Colors.grey.shade200,
+              color: ShimmerColors.tileColor(context),
               borderRadius: BorderRadius.circular(18),
             ),
             height: 90,
@@ -34,8 +46,8 @@ class ScheduleShimmer extends StatelessWidget {
               children: [
                 // Course name placeholder
                 Shimmer.fromColors(
-                  baseColor: ShimmerColors.baseColor,
-                  highlightColor: ShimmerColors.highlightColor,
+                  baseColor: ShimmerColors.baseColor(context),
+                  highlightColor: ShimmerColors.highlightColor(context),
                   child: Container(
                     width: 200,
                     height: 16,
@@ -48,8 +60,8 @@ class ScheduleShimmer extends StatelessWidget {
                 const SizedBox(height: 8),
                 // Lecturer name placeholder
                 Shimmer.fromColors(
-                  baseColor: ShimmerColors.baseColor,
-                  highlightColor: ShimmerColors.highlightColor,
+                  baseColor: ShimmerColors.baseColor(context),
+                  highlightColor: ShimmerColors.highlightColor(context),
                   child: Container(
                     width: 120,
                     height: 14,
@@ -75,8 +87,8 @@ class ProfileShimmer extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Shimmer.fromColors(
-      baseColor: ShimmerColors.baseColor,
-      highlightColor: ShimmerColors.highlightColor,
+      baseColor: ShimmerColors.baseColor(context),
+      highlightColor: ShimmerColors.highlightColor(context),
       child: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
         child: Column(
@@ -170,8 +182,8 @@ class ShimmerBox extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Shimmer.fromColors(
-      baseColor: ShimmerColors.baseColor,
-      highlightColor: ShimmerColors.highlightColor,
+      baseColor: ShimmerColors.baseColor(context),
+      highlightColor: ShimmerColors.highlightColor(context),
       child: Container(
         width: width,
         height: height,
