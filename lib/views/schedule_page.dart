@@ -24,9 +24,10 @@ class _SchedulePageState extends State<SchedulePage> {
   late DateTime _baseDate;
   int _currentPageIndex = 0;
   
-  // Number of days to show (past and future)
-  static const int _daysToShow = 14; // 2 weeks
-  static const int _initialPage = 7; // Start at day 7 (today)
+  // Infinite swiping: ±6 months from today (365 days total)
+  // PageView lazily builds only visible pages (~3-5), so no performance impact
+  static const int _daysToShow = 365; // Full ±6 months range
+  static const int _initialPage = 182; // Start at day 182 (today in center)
 
   @override
   void initState() {
