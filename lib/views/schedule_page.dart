@@ -34,7 +34,7 @@ class _SchedulePageState extends State<SchedulePage> {
     _baseDate = DateTime.now();
     _currentPageIndex = _initialPage;
     _pageController = PageController(initialPage: _initialPage);
-    
+
     // Defer data loading to after first frame to ensure context is ready
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _loadData();
@@ -134,27 +134,29 @@ class _SchedulePageState extends State<SchedulePage> {
           
           // Schedule content with PageView
           Expanded(
-            child: Consumer<ScheduleListViewModel>(
-              builder: (context, viewModel, child) {
-                if (viewModel.isLoading) {
-                  return const ScheduleShimmer();
-                }
+            child: PageView.builder(
+              controller: _pageController,
+              itemCount: _daysToShow,
+              onPageChanged: (index) {
+                // log page change event
+                setState(() {
+                  _currentPageIndex = index;
+                });
+              },
+              itemBuilder: (context, index) {
+                final date = _getDateForPage(index);
 
-                // Handle error state with retry option
-                if (viewModel.hasError) {
-                  return _buildErrorWidget(viewModel.errorMessage);
-                }
+                return Consumer<ScheduleListViewModel>(
+                  builder: (context, viewModel, child) {
+                    if (viewModel.isLoading) {
+                      return const ScheduleShimmer();
+                    }
 
-                return PageView.builder(
-                  controller: _pageController,
-                  itemCount: _daysToShow,
-                  onPageChanged: (index) {
-                    setState(() {
-                      _currentPageIndex = index;
-                    });
-                  },
-                  itemBuilder: (context, index) {
-                    final date = _getDateForPage(index);
+                    // Handle error state with retry option
+                    if (viewModel.hasError) {
+                      return _buildErrorWidget(viewModel.errorMessage);
+                    }
+
                     return _buildDaySchedule(viewModel, date);
                   },
                 );
