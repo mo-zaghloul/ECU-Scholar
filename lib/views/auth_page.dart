@@ -1,9 +1,11 @@
 import 'dart:ui';
 
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../view_models/auth_viewmodel.dart';
 import 'auth_webview_page.dart';
@@ -19,13 +21,31 @@ class AuthPage extends StatefulWidget {
 }
 
 class _AuthPageState extends State<AuthPage> {
+  late final TapGestureRecognizer _termsRecognizer;
+  late final TapGestureRecognizer _privacyRecognizer;
+
   @override
   void initState() {
     super.initState();
+    _termsRecognizer = TapGestureRecognizer()
+      ..onTap = () => _openExternalLink(
+            'https://ecu-scholar-web-6zcw.vercel.app/terms',
+          );
+    _privacyRecognizer = TapGestureRecognizer()
+      ..onTap = () => _openExternalLink(
+            'https://ecu-scholar-web-6zcw.vercel.app/privacy',
+          );
     // Initialize auth on first load
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<AuthViewModel>().initialize();
     });
+  }
+
+  @override
+  void dispose() {
+    _termsRecognizer.dispose();
+    _privacyRecognizer.dispose();
+    super.dispose();
   }
 
   Future<void> _openAuthBrowser() async {
@@ -44,6 +64,13 @@ class _AuthPageState extends State<AuthPage> {
     Navigator.of(context).pushReplacement(
       MaterialPageRoute(builder: (context) => const HomePage()),
     );
+  }
+
+  Future<void> _openExternalLink(String url) async {
+    final uri = Uri.parse(url);
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    }
   }
 
   @override
@@ -246,13 +273,46 @@ class _AuthPageState extends State<AuthPage> {
                 // Footer terms text
                 Padding(
                   padding: const EdgeInsets.only(bottom: 32.0),
-                  child: Text(
-                    'By continuing you agree to the\nTerms of Service and Privacy Policy',
-                    style: GoogleFonts.inter(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w400,
-                      color: Colors.white.withValues(alpha: 0.4),
-                      height: 1.6,
+                  child: Text.rich(
+                    TextSpan(
+                      style: GoogleFonts.inter(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w400,
+                        color: Colors.white.withValues(alpha: 0.4),
+                        height: 1.6,
+                      ),
+                      children: [
+                        const TextSpan(
+                          text: 'By continuing you agree to the\n',
+                        ),
+                        TextSpan(
+                          text: 'Terms of Use',
+                          style: GoogleFonts.inter(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w400,
+                            color: Colors.white.withValues(alpha: 0.4),
+                            height: 1.6,
+                            decoration: TextDecoration.underline,
+                            decorationColor: Colors.white.withValues(alpha: 0.4),
+                            decorationThickness: 1.1,
+                          ),
+                          recognizer: _termsRecognizer,
+                        ),
+                        const TextSpan(text: ' and '),
+                        TextSpan(
+                          text: 'Privacy Policy',
+                          style: GoogleFonts.inter(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w400,
+                            color: Colors.white.withValues(alpha: 0.4),
+                            height: 1.6,
+                            decoration: TextDecoration.underline,
+                            decorationColor: Colors.white.withValues(alpha: 0.4),
+                            decorationThickness: 1.1,
+                          ),
+                          recognizer: _privacyRecognizer,
+                        ),
+                      ],
                     ),
                     textAlign: TextAlign.center,
                   ),
