@@ -1,6 +1,5 @@
 import 'dart:ui';
 
-import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -45,10 +44,6 @@ class _AuthPageState extends State<AuthPage> {
     Navigator.of(context).pushReplacement(
       MaterialPageRoute(builder: (context) => const HomePage()),
     );
-  }
-
-  Future<void> _logout() async {
-    await context.read<AuthViewModel>().logout();
   }
 
   @override
