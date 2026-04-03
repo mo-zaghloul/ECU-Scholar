@@ -1,6 +1,6 @@
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
-import 'local_notification_handler.dart';
+import 'local_notification_service.dart';
 
 /// Service for managing Firebase Cloud Messaging (FCM) and remote push notifications
 /// Handles foreground, background, and terminated app notification states

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:provider/provider.dart';
 
+import '../services/notification_service/remote_notification_service.dart';
 import '../themes/theme_provider.dart';
 import '../view_models/auth_viewmodel.dart';
 import '../view_models/student_viewmodel.dart';
@@ -90,6 +91,14 @@ class _AuthProcessingPageState extends State<AuthProcessingPage>
         
         // Populate StudentViewModel with the student data from auth/init
         context.read<StudentViewModel>().setStudent(result.student!);
+
+        // Request notification permissions after successful auth
+        try {
+          await RemoteNotificationService.instance.requestPermissions();
+        } catch (e) {
+          debugPrint('Error requesting notification permissions: $e');
+          // Don't block navigation if permissions fail
+        }
         
         // Navigate to home on success
         _navigateToHome();

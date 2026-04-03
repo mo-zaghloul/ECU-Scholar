@@ -1,5 +1,6 @@
 import 'package:ecu_scholar/services/auth_service/auth_service.dart';
 import 'package:ecu_scholar/services/onboarding_service/onboarding_service.dart';
+import 'package:ecu_scholar/services/notification_service/remote_notification_service.dart';
 import 'package:ecu_scholar/view_models/auth_viewmodel.dart';
 import 'package:ecu_scholar/view_models/grades_viewmodel.dart';
 import 'package:ecu_scholar/view_models/onboarding_viewmodel.dart';
@@ -7,6 +8,8 @@ import 'package:ecu_scholar/view_models/student_viewmodel.dart';
 import 'package:ecu_scholar/views/auth_page.dart';
 import 'package:ecu_scholar/views/onboarding_page.dart';
 import 'package:ecu_scholar/themes/theme_provider.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'firebase_options.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
@@ -19,6 +22,14 @@ import 'view_models/schedule_list_viewmodel.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  
+  // Initialize Firebase
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
+  
+  // Initialize notification service
+  await RemoteNotificationService.instance.initialize();
   
   // Lock orientation to portrait
   await SystemChrome.setPreferredOrientations([

@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import '../models/student_model.dart';
 import '../services/auth_service/auth_service.dart';
+import '../services/notification_service/remote_notification_service.dart';
 import '../services/remote_data_service/remote_data_service.dart';
 
 /// Enum representing the different states of authentication
@@ -84,6 +85,14 @@ class AuthViewModel extends ChangeNotifier {
     _setState(AuthState.loading);
     
     try {
+      // Call backend logout endpoint
+      final apiService = BackendApiService();
+      await apiService.authLogout();
+
+      // Delete FCM token
+      await RemoteNotificationService.instance.deleteToken();
+
+      // Clear local session token
       await _authService.clearSessionToken();
       _setState(AuthState.unauthenticated);
     } catch (e) {
@@ -95,6 +104,7 @@ class AuthViewModel extends ChangeNotifier {
 
   /// Initialize authentication with a session token from SIS cookie.
   /// Calls backend /auth/init to scrape and store student data.
+  /// Includes FCM token for push notification registration.
   /// Returns AuthInitResult with student data on success.
   Future<AuthInitResult> initializeWithToken(String sessionToken) async {
     _setState(AuthState.processing);
@@ -110,9 +120,18 @@ class AuthViewModel extends ChangeNotifier {
         return AuthInitResult(success: false, errorMessage: _errorMessage);
       }
 
+      // Get FCM token for notification registration
+      String? fcmToken;
+      try {
+        fcmToken = await RemoteNotificationService.instance.getFCMToken();
+      } catch (e) {
+        debugPrint('Warning: Failed to get FCM token: $e');
+        // Continue with auth even if FCM token fetch fails
+      }
+
       // Call backend to initialize auth and scrape data
       final apiService = BackendApiService();
-      final response = await apiService.authInit(sessionToken);
+      final response = await apiService.authInit(sessionToken, fcmToken: fcmToken);
 
       // Save the student ID, name, and faculty from the response
       final student = response.student;

@@ -91,7 +91,8 @@ class BackendApiService {
 
   /// Initialize auth with session token - backend scrapes profile, schedule, grades
   /// This is called after intercepting ASP.NET_SessionId cookie
-  Future<AuthInitResponse> authInit(String sessionToken) async {
+  /// Includes FCM token for push notification registration
+  Future<AuthInitResponse> authInit(String sessionToken, {String? fcmToken}) async {
     try {
       // Use a separate Dio instance for auth init since we don't have student ID yet
       final authDio = Dio(BaseOptions(
@@ -107,7 +108,16 @@ class BackendApiService {
       // Add error interceptor
       authDio.interceptors.add(DioErrorInterceptor());
 
-      final response = await authDio.post('/auth/init');
+      // Prepare request body with FCM token
+      final requestBody = <String, dynamic>{};
+      if (fcmToken != null && fcmToken.isNotEmpty) {
+        requestBody['fcm_token'] = fcmToken;
+        debugPrint('Including FCM token in auth/init request');
+      }
+
+      final response = requestBody.isEmpty
+          ? await authDio.post('/auth/init')
+          : await authDio.post('/auth/init', data: requestBody);
 
       debugPrint('Auth init response: ${response.data}');
 
@@ -133,8 +143,12 @@ class BackendApiService {
       rethrow;
     }
   }
+
+  /// Dev mode login with session token - uses /auth/login endpoint
+  /// Faster than authInit, doesn't trigger scraping
   Future<AuthInitResponse> authLogin(String sessionToken) async {
-    try{
+    try {
+      // Use a separate Dio instance for auth login
       final authDio = Dio(BaseOptions(
         baseUrl: baseUrl,
         headers: {
@@ -143,39 +157,50 @@ class BackendApiService {
         },
       ));
 
-    final response = await authDio.post('/auth/login');
-    debugPrint('Auth login response: ${response.data}');
-    if (response.statusCode == 200 || response.statusCode == 201) {
-      final result = AuthInitResponse.fromJson(response.data);
-      debugPrint('Success: Auth login complete, student ID: ${result.student.id}');
-      return result;
-    } else {
-      throw Exception('Failed to login. Status: ${response.statusCode}');
-    }
-    } on DioException catch (e) {
-      debugPrint('Auth login DioException: ${e.message}');
-      if (e.response != null) {
-        final errorMsg = e.response?.data['detail'] ?? e.response?.data['message'] ?? e.message;
-        throw Exception(errorMsg);
+      // Add error interceptor
+      authDio.interceptors.add(DioErrorInterceptor());
+
+      final response = await authDio.post('/auth/login');
+      debugPrint('Auth login response: ${response.data}');
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        final result = AuthInitResponse.fromJson(response.data);
+        debugPrint('✅ Auth login complete, student ID: ${result.student.id}');
+        return result;
+      } else {
+        throw ApiException(
+          message: 'Failed to login. Status: ${response.statusCode}',
+          statusCode: response.statusCode,
+        );
       }
-      throw Exception('Network error: ${e.message}');
+    } on DioException catch (e) {
+      // Extract ApiException if wrapped inside DioException by interceptor
+      if (e.error is ApiException) {
+        throw e.error as ApiException;
+      }
+      final apiException = DioErrorInterceptor.convertDioException(e);
+      throw apiException;
     } catch (e) {
-      debugPrint('Failed to login: $e');
+      debugPrint('❌ Failed to login: $e');
       rethrow;
     }
   }
+
   /// Trigger a re-scrape of data from SIS
   Future<void> refreshScrape() async {
     try {
       final response = await _dio.post('/scrape/refresh');
 
       if (response.statusCode == 200) {
-        debugPrint('Success: Data refresh triggered');
+        debugPrint('✅ Data refresh triggered');
       } else {
-        throw Exception('Failed to refresh data. Status: ${response.statusCode}');
+        throw ApiException(
+          message: 'Failed to refresh data. Status: ${response.statusCode}',
+          statusCode: response.statusCode,
+        );
       }
     } catch (e) {
-      debugPrint('Failed to refresh scrape: $e');
+      debugPrint('❌ Failed to refresh scrape: $e');
       rethrow;
     }
   }
@@ -237,33 +262,40 @@ class BackendApiService {
             .map((item) => Schedule.fromJson(item as Map<String, dynamic>))
             .toList();
 
-        debugPrint('Success: Schedules loaded successfully');
+        debugPrint('✅ Schedules loaded successfully');
         return schedules;
       } else {
-        debugPrint('Failed to load schedules. Status code: ${response.statusCode}');
-        throw Exception('Failed to load schedules. Status code: ${response.statusCode}');
+        debugPrint('❌ Failed to load schedules. Status code: ${response.statusCode}');
+        throw ApiException(
+          message: 'Failed to load schedules.',
+          statusCode: response.statusCode,
+        );
       }
     } catch (e) {
-      debugPrint('Failed to fetch schedules: $e');
-      throw Exception('Failed to fetch schedules: $e');
+      debugPrint('❌ Failed to fetch schedules: $e');
+      rethrow;
     }
   }
 
+  /// Fetch student profile data
   Future<Student> fetchStudentData() async {
     try {
       final response = await _dio.get('/student/profile');
 
       if (response.statusCode == 200) {
         final studentData = response.data['student'] as Map<String, dynamic>;
-        debugPrint('Success: Student data loaded successfully');
+        debugPrint('✅ Student data loaded successfully');
         return Student.fromJson(studentData);
       } else {
-        debugPrint('Failed to load student data. Status code: ${response.statusCode}');
-        throw Exception('Failed to load student data. Status code: ${response.statusCode}');
+        debugPrint('❌ Failed to load student data. Status code: ${response.statusCode}');
+        throw ApiException(
+          message: 'Failed to load student data.',
+          statusCode: response.statusCode,
+        );
       }
     } catch (e) {
-      debugPrint('Failed to fetch student data: $e');
-      throw Exception('Failed to fetch student data: $e');
+      debugPrint('❌ Failed to fetch student data: $e');
+      rethrow;
     }
   }
 
@@ -273,14 +305,17 @@ class BackendApiService {
       final response = await _dio.get('/grades/gpa');
 
       if (response.statusCode == 200) {
-        debugPrint('Success: GPA summary loaded');
+        debugPrint('✅ GPA summary loaded');
         return GpaSummary.fromJson(response.data);
       } else {
-        throw Exception('Failed to load GPA. Status: ${response.statusCode}');
+        throw ApiException(
+          message: 'Failed to load GPA.',
+          statusCode: response.statusCode,
+        );
       }
     } catch (e) {
-      debugPrint('Failed to fetch GPA summary: $e');
-      throw Exception('Failed to fetch GPA summary: $e');
+      debugPrint('❌ Failed to fetch GPA summary: $e');
+      rethrow;
     }
   }
 
@@ -291,14 +326,17 @@ class BackendApiService {
 
       if (response.statusCode == 200) {
         final semesters = response.data['semesters'] as List<dynamic>? ?? [];
-        debugPrint('Success: ${semesters.length} semester entries loaded');
+        debugPrint('✅ ${semesters.length} semester entries loaded');
         return parseSemestersList(semesters);
       } else {
-        throw Exception('Failed to load semesters. Status: ${response.statusCode}');
+        throw ApiException(
+          message: 'Failed to load semesters.',
+          statusCode: response.statusCode,
+        );
       }
     } catch (e) {
-      debugPrint('Failed to fetch semesters: $e');
-      throw Exception('Failed to fetch semesters: $e');
+      debugPrint('❌ Failed to fetch semesters: $e');
+      rethrow;
     }
   }
 
@@ -320,14 +358,60 @@ class BackendApiService {
       if (response.statusCode == 200) {
         final gradesList = response.data['grades'] as List<dynamic>? ?? [];
         final grades = gradesList.map((e) => Grade.fromJson(e)).toList();
-        debugPrint('Success: ${grades.length} grades loaded');
+        debugPrint('✅ ${grades.length} grades loaded');
         return grades;
       } else {
-        throw Exception('Failed to load grades. Status: ${response.statusCode}');
+        throw ApiException(
+          message: 'Failed to load grades.',
+          statusCode: response.statusCode,
+        );
       }
     } catch (e) {
-      debugPrint('Failed to fetch grades: $e');
-      throw Exception('Failed to fetch grades: $e');
+      debugPrint('❌ Failed to fetch grades: $e');
+      rethrow;
+    }
+  }
+
+  /// Logout user and clear FCM token from backend
+  /// Unregisters the device from receiving push notifications
+  Future<void> authLogout() async {
+    try {
+      final sessionToken = _authService.sessionToken;
+      final studentId = _authService.studentId;
+
+      if (sessionToken == null || sessionToken.isEmpty) {
+        debugPrint('⚠️ No session token available for logout');
+        return;
+      }
+
+      final response = await _dio.post(
+        '/auth/logout',
+        options: Options(
+          headers: {
+            'X-Session-Token': sessionToken,
+            'X-Student-Id': studentId ?? '',
+          },
+        ),
+      );
+
+      if (response.statusCode == 200) {
+        debugPrint('✅ Logged out successfully');
+      } else {
+        throw ApiException(
+          message: 'Failed to logout.',
+          statusCode: response.statusCode,
+        );
+      }
+    } on DioException catch (e) {
+      // Extract ApiException if wrapped inside DioException by interceptor
+      if (e.error is ApiException) {
+        throw e.error as ApiException;
+      }
+      final apiException = DioErrorInterceptor.convertDioException(e);
+      throw apiException;
+    } catch (e) {
+      debugPrint('❌ Failed to logout: $e');
+      rethrow;
     }
   }
 }
