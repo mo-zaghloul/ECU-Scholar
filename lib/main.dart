@@ -13,6 +13,8 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:ecu_scholar/l10n/app_localizations.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:provider/provider.dart';
+import 'package:sentry_flutter/sentry_flutter.dart';
+import 'package:ecu_scholar/services/sentry_service/error_handler.dart';
 import 'view_models/schedule_list_viewmodel.dart';
 
 Future<void> main() async {
@@ -23,7 +25,7 @@ Future<void> main() async {
     DeviceOrientation.portraitUp,
     DeviceOrientation.portraitDown,
   ]);
-  
+
   // Load environment variables
   await dotenv.load(fileName: '.env');
   
@@ -31,18 +33,32 @@ Future<void> main() async {
   await AuthService.instance.initialize();
   await OnboardingService.instance.initialize();
   
-  runApp(
-    MultiProvider(
-      providers: [
-        ChangeNotifierProvider<ThemeProvider>(create: (context) => ThemeProvider()),
-        ChangeNotifierProvider<AuthViewModel>(create: (context) => AuthViewModel()),
-        ChangeNotifierProvider<OnboardingViewModel>(create: (context) => OnboardingViewModel()),
-        ChangeNotifierProvider<ScheduleListViewModel>(create: (context) => ScheduleListViewModel()),
-        ChangeNotifierProvider<StudentViewModel>(create: (context) => StudentViewModel()),
-        ChangeNotifierProvider<GradesViewModel>(create: (context) => GradesViewModel()),
-      ],
-      child: const MyApp(),
-    ),
+  // Initialize Sentry
+  final sentryDsn = dotenv.env['SENTRY_DSN'];
+  
+  await SentryFlutter.init(
+    (options) {
+      options.dsn = sentryDsn;
+      options.tracesSampleRate = 0.01;
+    },
+    appRunner: () {
+      // Setup global error handlers
+      ErrorHandler.setupGlobalErrorHandlers();
+      
+      runApp(
+        MultiProvider(
+          providers: [
+            ChangeNotifierProvider<ThemeProvider>(create: (context) => ThemeProvider()),
+            ChangeNotifierProvider<AuthViewModel>(create: (context) => AuthViewModel()),
+            ChangeNotifierProvider<OnboardingViewModel>(create: (context) => OnboardingViewModel()),
+            ChangeNotifierProvider<ScheduleListViewModel>(create: (context) => ScheduleListViewModel()),
+            ChangeNotifierProvider<StudentViewModel>(create: (context) => StudentViewModel()),
+            ChangeNotifierProvider<GradesViewModel>(create: (context) => GradesViewModel()),
+          ],
+          child: const MyApp(),
+        ),
+      );
+    },
   );
 }
 
