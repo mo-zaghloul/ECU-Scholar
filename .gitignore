@@ -56,5 +56,7 @@ app.*.map.json
 /android/app/profile
 /android/app/release
 
+# Firebase project 
+google-services.json
 
 /notes
