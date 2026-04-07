@@ -138,6 +138,51 @@ class AuthViewModel extends ChangeNotifier {
     }
   }
 
+  /// Dev mode login with session token - uses /auth/login endpoint
+  /// Faster than authInit, doesn't trigger scraping
+  /// Returns AuthInitResult with student data on success.
+  Future<AuthInitResult> loginWithToken(String sessionToken) async {
+    _setState(AuthState.processing);
+    _errorMessage = null;
+    _cachedStudent = null;
+
+    try {
+      // First, save the session token locally
+      final tokenSaved = await _authService.saveSessionToken(sessionToken);
+      if (!tokenSaved) {
+        _errorMessage = 'Failed to save session token locally';
+        _setState(AuthState.error);
+        return AuthInitResult(success: false, errorMessage: _errorMessage);
+      }
+
+      // Call backend to login with session token
+      final apiService = BackendApiService();
+      final response = await apiService.authLogin(sessionToken);
+
+      // Save the student ID, name, and faculty from the response
+      final student = response.student;
+      if (student.id.isNotEmpty) {
+        await _authService.saveStudentId(student.id);
+        await _authService.saveStudentName(student.name);
+        await _authService.saveStudentFaculty(student.faculty);
+        _cachedStudent = student;
+        debugPrint('Dev login complete: Student ${student.name} (ID: ${student.id})');
+      } else {
+        _errorMessage = 'No student ID returned from server';
+        _setState(AuthState.error);
+        return AuthInitResult(success: false, errorMessage: _errorMessage);
+      }
+
+      _setState(AuthState.authenticated);
+      return AuthInitResult(success: true, student: student);
+    } catch (e) {
+      _errorMessage = e.toString().replaceFirst('Exception: ', '');
+      _setState(AuthState.error);
+      debugPrint('Dev login error: $_errorMessage');
+      return AuthInitResult(success: false, errorMessage: _errorMessage);
+    }
+  }
+
   void _setState(AuthState newState) {
     _state = newState;
     notifyListeners();

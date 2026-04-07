@@ -1,5 +1,6 @@
 import 'dart:ui';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -23,6 +24,7 @@ class AuthPage extends StatefulWidget {
 class _AuthPageState extends State<AuthPage> {
   late final TapGestureRecognizer _termsRecognizer;
   late final TapGestureRecognizer _privacyRecognizer;
+  late final TextEditingController _devTokenController;
 
   @override
   void initState() {
@@ -35,6 +37,11 @@ class _AuthPageState extends State<AuthPage> {
       ..onTap = () => _openExternalLink(
             'https://ecu-scholar-web-6zcw.vercel.app/privacy',
           );
+    _devTokenController = TextEditingController();
+    // Rebuild when token text changes to update button state
+    _devTokenController.addListener(() {
+      setState(() {});
+    });
     // Initialize auth on first load
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<AuthViewModel>().initialize();
@@ -45,6 +52,7 @@ class _AuthPageState extends State<AuthPage> {
   void dispose() {
     _termsRecognizer.dispose();
     _privacyRecognizer.dispose();
+    _devTokenController.dispose();
     super.dispose();
   }
 
@@ -57,6 +65,53 @@ class _AuthPageState extends State<AuthPage> {
     // If authentication was successful, navigate to home
     if (result == true && mounted) {
       _navigateToHome();
+    }
+  }
+
+  Future<void> _submitDevToken(BuildContext context, AuthViewModel authViewModel) async {
+    final token = _devTokenController.text.trim();
+    if (token.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please enter a token')),
+      );
+      return;
+    }
+
+    // Show loading indicator
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Row(
+            children: [
+              SizedBox(
+                width: 16,
+                height: 16,
+                child: CircularProgressIndicator(strokeWidth: 2),
+              ),
+              SizedBox(width: 12),
+              Text('Testing token...'),
+            ],
+          ),
+          duration: Duration(seconds: 30),
+        ),
+      );
+    }
+
+    // Try to authenticate with the provided token
+    final result = await authViewModel.loginWithToken(token);
+    
+    if (result.success && mounted) {
+      _devTokenController.clear();
+      _navigateToHome();
+    } else if (mounted) {
+      ScaffoldMessenger.of(context).clearSnackBars();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(result.errorMessage ?? 'Authentication failed'),
+          backgroundColor: const Color(0xFFCE1407),
+          duration: const Duration(seconds: 4),
+        ),
+      );
     }
   }
 
@@ -267,6 +322,105 @@ class _AuthPageState extends State<AuthPage> {
                         ),
                       ),
                     ),
+                    
+                    // Dev Mode Token Input (only in debug mode)
+                    if (kDebugMode) ...[
+                      const SizedBox(height: 24),
+                      Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: Colors.blue.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(
+                            color: Colors.blue.withValues(alpha: 0.3),
+                          ),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                const Icon(Icons.developer_mode, 
+                                  color: Colors.blue, size: 18),
+                                const SizedBox(width: 8),
+                                Text(
+                                  'Dev Mode - Quick Login',
+                                  style: GoogleFonts.inter(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w600,
+                                    color: Colors.blue,
+                                    letterSpacing: 0.3,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 12),
+                            TextField(
+                              controller: _devTokenController,
+                              decoration: InputDecoration(
+                                hintText: 'Paste session token/cookie...',
+                                hintStyle: GoogleFonts.inter(
+                                  fontSize: 13,
+                                  color: Colors.white.withValues(alpha: 0.4),
+                                ),
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                  borderSide: BorderSide(
+                                    color: Colors.white.withValues(alpha: 0.2),
+                                  ),
+                                ),
+                                focusedBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                  borderSide: const BorderSide(
+                                    color: Colors.blue,
+                                  ),
+                                ),
+                                filled: true,
+                                fillColor: Colors.white.withValues(alpha: 0.05),
+                                contentPadding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 10,
+                                ),
+                              ),
+                              style: GoogleFonts.inter(
+                                fontSize: 13,
+                                color: Colors.white,
+                              ),
+                              maxLines: 3,
+                              minLines: 1,
+                            ),
+                            const SizedBox(height: 12),
+                            SizedBox(
+                              width: double.infinity,
+                              height: 44,
+                              child: Material(
+                                color: Colors.blue.withValues(alpha: 0.2),
+                                borderRadius: BorderRadius.circular(12),
+                                child: InkWell(
+                                  onTap: _devTokenController.text.isNotEmpty
+                                      ? () => _submitDevToken(context, authViewModel)
+                                      : null,
+                                  borderRadius: BorderRadius.circular(12),
+                                  child: Center(
+                                    child: Text(
+                                      'Test Login',
+                                      style: GoogleFonts.inter(
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.w600,
+                                        color: _devTokenController.text.isNotEmpty
+                                            ? Colors.blue
+                                            : Colors.blue.withValues(alpha: 0.5),
+                                        letterSpacing: 0.3,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
                   ],
                 ),
 
