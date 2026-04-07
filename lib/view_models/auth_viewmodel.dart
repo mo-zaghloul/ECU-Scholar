@@ -114,10 +114,12 @@ class AuthViewModel extends ChangeNotifier {
       final apiService = BackendApiService();
       final response = await apiService.authInit(sessionToken);
 
-      // Save the student ID from the response
+      // Save the student ID, name, and faculty from the response
       final student = response.student;
       if (student.id.isNotEmpty) {
         await _authService.saveStudentId(student.id);
+        await _authService.saveStudentName(student.name);
+        await _authService.saveStudentFaculty(student.faculty);
         _cachedStudent = student;
         debugPrint('Auth init complete: Student ${student.name} (ID: ${student.id})');
       } else {
