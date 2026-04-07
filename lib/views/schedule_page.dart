@@ -1,5 +1,6 @@
 import 'package:ecu_scholar/views/grades_page.dart';
 import 'package:ecu_scholar/views/settings_page.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -12,6 +13,7 @@ import '../widgets/date_picker_dialog.dart' as custom_dialog;
 import '../utils/schedule_tile.dart';
 import '../constants/text_styles.dart';
 import '../widgets/empty_schedulelist_widget.dart';
+import '../widgets/shared_prefs_viewer.dart';
 
 class SchedulePage extends StatefulWidget {
   const SchedulePage({super.key});
@@ -202,6 +204,7 @@ class _SchedulePageState extends State<SchedulePage> {
           ),
         ],
       ),
+      floatingActionButton: kDebugMode ? const SharedPrefsViewerButton() : null,
     );
   }
 
