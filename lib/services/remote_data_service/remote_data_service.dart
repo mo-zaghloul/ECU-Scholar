@@ -108,7 +108,37 @@ class BackendApiService {
       rethrow;
     }
   }
+  Future<AuthInitResponse> authLogin(String sessionToken) async {
+    try{
+      final authDio = Dio(BaseOptions(
+        baseUrl: baseUrl,
+        headers: {
+          'accept': 'application/json',
+          'X-Session-Token': sessionToken,
+        },
+      ));
 
+    final response = await authDio.post('/auth/login');
+    debugPrint('Auth login response: ${response.data}');
+    if (response.statusCode == 200 || response.statusCode == 201) {
+      final result = AuthInitResponse.fromJson(response.data);
+      debugPrint('Success: Auth login complete, student ID: ${result.student.id}');
+      return result;
+    } else {
+      throw Exception('Failed to login. Status: ${response.statusCode}');
+    }
+    } on DioException catch (e) {
+      debugPrint('Auth login DioException: ${e.message}');
+      if (e.response != null) {
+        final errorMsg = e.response?.data['detail'] ?? e.response?.data['message'] ?? e.message;
+        throw Exception(errorMsg);
+      }
+      throw Exception('Network error: ${e.message}');
+    } catch (e) {
+      debugPrint('Failed to login: $e');
+      rethrow;
+    }
+  }
   /// Trigger a re-scrape of data from SIS
   Future<void> refreshScrape() async {
     try {
