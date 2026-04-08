@@ -74,6 +74,11 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    
+    // Load cached student data from SharedPreferences on app startup
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<StudentViewModel>().loadCachedStudentData();
+    });
   }
 
   @override
