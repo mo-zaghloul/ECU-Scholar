@@ -14,6 +14,8 @@ import '../utils/schedule_tile.dart';
 import '../constants/text_styles.dart';
 import '../widgets/empty_schedulelist_widget.dart';
 import '../widgets/shared_prefs_viewer.dart';
+import '../widgets/error_widget.dart' as error_widget;
+import '../services/exceptions/api_exception.dart';
 
 class SchedulePage extends StatefulWidget {
   const SchedulePage({super.key});
@@ -346,45 +348,17 @@ class _SchedulePageState extends State<SchedulePage> {
   }
 
   Widget _buildErrorWidget(String? errorMessage) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(24.0),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              Icons.error_outline,
-              size: 64,
-              color: Theme.of(context).colorScheme.error,
-            ),
-            const SizedBox(height: 16),
-            Text(
-              'Failed to load schedule',
-              style: GoogleFonts.almarai(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: Theme.of(context).colorScheme.onSurface,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              errorMessage ?? 'An unexpected error occurred',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                color: Colors.grey.shade600,
-                fontSize: 14,
-              ),
-            ),
-            const SizedBox(height: 24),
-            ElevatedButton.icon(
-              onPressed: () => fetchSchedules(),
-              icon: const Icon(Icons.refresh),
-              label: const Text('Retry'),
-              style: ElevatedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-              ),
-            ),
-          ],
+    final displayMessage = errorMessage ?? 'An unexpected error occurred.\nPull to refresh.';
+
+    return RefreshIndicator(
+      onRefresh: fetchSchedules,
+      child: SingleChildScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        child: SizedBox(
+          height: MediaQuery.of(context).size.height * 0.6,
+          child: error_widget.ErrorWidget(
+            message: displayMessage,
+          ),
         ),
       ),
     );

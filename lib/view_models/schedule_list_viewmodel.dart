@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../models/schedule_model.dart';
 import '../services/remote_data_service/remote_data_service.dart';
+import '../services/exceptions/api_exception.dart';
 
 enum LoadingState { initial, loading, loaded, error }
 
@@ -26,13 +27,19 @@ class ScheduleListViewModel extends ChangeNotifier {
     try {
       // Create fresh API service instance to ensure latest auth headers are used
       final apiService = BackendApiService();
-      debugPrint('ScheduleListViewModel: Fetching schedules...');
+      debugPrint('📅 ScheduleListViewModel: Fetching schedules...');
       _weekSchedule = await apiService.fetchWeekSchedule();
       _loadingState = LoadingState.loaded;
-      debugPrint('ScheduleListViewModel: Schedules loaded successfully (${_weekSchedule.length} days)');
+      debugPrint('✅ ScheduleListViewModel: Schedules loaded successfully (${_weekSchedule.length} days)');
+      notifyListeners();
+    } on ApiException catch (e) {
+      debugPrint('❌ ScheduleListViewModel: API Error fetching schedules: ${e.message}');
+      _errorMessage = e.userMessage;
+      _loadingState = LoadingState.error;
+      _weekSchedule = {};
       notifyListeners();
     } catch (e) {
-      debugPrint('ScheduleListViewModel: Error fetching schedules: $e');
+      debugPrint('❌ ScheduleListViewModel: Error fetching schedules: $e');
       _errorMessage = e.toString();
       _loadingState = LoadingState.error;
       _weekSchedule = {};
