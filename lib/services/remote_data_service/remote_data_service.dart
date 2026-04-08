@@ -6,6 +6,8 @@ import 'package:flutter/material.dart';
 
 import '../../constants/secrets.dart';
 import '../auth_service/auth_service.dart';
+import '../exceptions/api_exception.dart';
+import '../exceptions/dio_error_interceptor.dart';
 
 /// Response from the auth/init endpoint
 class AuthInitResponse {
@@ -59,6 +61,9 @@ class BackendApiService {
       connectTimeout: const Duration(seconds: 30),
       receiveTimeout: const Duration(seconds: 60),
     ));
+
+    // Add error interceptor
+    _dio.interceptors.add(DioErrorInterceptor());
   }
 
   /// Update the session token in the headers (useful after re-authentication)
@@ -68,6 +73,20 @@ class BackendApiService {
     _dio.options.headers['X-Session-Token'] = token;
     _dio.options.headers['X-Student-Id'] = studentId;
     debugPrint('Session token updated in API service');
+  }
+
+  /// Helper method to handle DioException and convert to ApiException
+  ApiException _handleDioError(dynamic error) {
+    if (error is ApiException) {
+      return error;
+    }
+    if (error is DioException) {
+      return DioErrorInterceptor.convertDioException(error);
+    }
+    return ApiException(
+      message: error.toString(),
+      code: 'UNKNOWN_ERROR',
+    );
   }
 
   /// Initialize auth with session token - backend scrapes profile, schedule, grades
@@ -85,26 +104,32 @@ class BackendApiService {
         receiveTimeout: const Duration(seconds: 120), // Longer timeout for scraping
       ));
 
+      // Add error interceptor
+      authDio.interceptors.add(DioErrorInterceptor());
+
       final response = await authDio.post('/auth/init');
 
       debugPrint('Auth init response: ${response.data}');
 
       if (response.statusCode == 200 || response.statusCode == 201) {
         final result = AuthInitResponse.fromJson(response.data);
-        debugPrint('Success: Auth initialized, student ID: ${result.student.id}');
+        debugPrint('✅ Auth initialized successfully. Student ID: ${result.student.id}');
         return result;
       } else {
-        throw Exception('Failed to initialize auth. Status: ${response.statusCode}');
+        throw ApiException(
+          message: 'Failed to initialize auth. Status: ${response.statusCode}',
+          statusCode: response.statusCode,
+        );
       }
     } on DioException catch (e) {
-      debugPrint('Auth init DioException: ${e.message}');
-      if (e.response != null) {
-        final errorMsg = e.response?.data['detail'] ?? e.response?.data['message'] ?? e.message;
-        throw Exception(errorMsg);
+      // Extract ApiException if wrapped inside DioException by interceptor
+      if (e.error is ApiException) {
+        throw e.error as ApiException;
       }
-      throw Exception('Network error: ${e.message}');
+      final apiException = DioErrorInterceptor.convertDioException(e);
+      throw apiException;
     } catch (e) {
-      debugPrint('Failed to initialize auth: $e');
+      debugPrint('❌ Failed to initialize auth: $e');
       rethrow;
     }
   }
@@ -159,7 +184,6 @@ class BackendApiService {
   Future<Map<int, List<Schedule>>> fetchWeekSchedule() async {
     try {
       final response = await _dio.get('/schedule/week');
-      debugPrint('Response: ${response.data}');
       
       if (response.statusCode == 200) {
         final Map<int, List<Schedule>> weekSchedule = {};
@@ -182,14 +206,23 @@ class BackendApiService {
               .toList();
         }
         
-        debugPrint('Success: Week schedule loaded (${weekSchedule.length} days)');
+        debugPrint('✅ Week schedule loaded (${weekSchedule.length} days)');
         return weekSchedule;
       } else {
-        throw Exception('Failed to load schedule. Status: ${response.statusCode}');
+        throw ApiException(
+          message: 'Failed to load schedule.',
+          statusCode: response.statusCode,
+        );
       }
+    } on DioException catch (e) {
+      // Extract ApiException if wrapped inside DioException by interceptor
+      if (e.error is ApiException) {
+        throw e.error as ApiException;
+      }
+      rethrow;
     } catch (e) {
-      debugPrint('Failed to fetch week schedule: $e');
-      throw Exception('Failed to fetch week schedule: $e');
+      debugPrint('❌ Failed to fetch week schedule: $e');
+      throw _handleDioError(e);
     }
   }
 
