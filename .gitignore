@@ -56,7 +56,12 @@ app.*.map.json
 /android/app/profile
 /android/app/release
 
+# Android signing keys
+android/key.properties
+android/upload-keystore.jks
+
 # Firebase project 
 google-services.json
+firebase_options.dart
 
 /notes
