@@ -1,5 +1,3 @@
-import 'package:ecu_scholar/utils/academic_advisor_tile.dart';
-import 'package:ecu_scholar/utils/profile_tile.dart';
 import 'package:ecu_scholar/view_models/auth_viewmodel.dart';
 import 'package:ecu_scholar/view_models/student_viewmodel.dart';
 import 'package:ecu_scholar/views/auth_page.dart';
@@ -7,14 +5,12 @@ import 'package:ecu_scholar/widgets/shimmer_loading.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../constants/text_styles.dart';
-import '../models/student_model.dart';
-
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
 
   @override
-  _ProfilePageState createState() => _ProfilePageState();
+  ProfilePageState createState() => ProfilePageState();
 }
   /*
   final Student _student = Student(
@@ -28,7 +24,7 @@ class ProfilePage extends StatefulWidget {
     totalPassedHours: '37.00',
   );
   */
-  class _ProfilePageState extends State<ProfilePage> {
+  class ProfilePageState extends State<ProfilePage> {
   @override
   void initState() {
     super.initState();
@@ -53,7 +49,7 @@ class ProfilePage extends StatefulWidget {
           ElevatedButton(
             onPressed: () async {
               Navigator.pop(context); // Close dialog
-              await context.read<AuthViewModel>().logout();
+              await context.read<AuthViewModel>().logout(); // Clear auth state
               if (context.mounted) {
                 Navigator.of(context).pushAndRemoveUntil(
                   MaterialPageRoute(builder: (context) => const AuthPage()),

@@ -1,4 +1,4 @@
-package com.example.ecu_scholar
+package app.ecu.scholar
 
 import io.flutter.embedding.android.FlutterActivity
 

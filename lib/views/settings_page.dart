@@ -8,6 +8,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../themes/theme_provider.dart';
 
@@ -21,18 +22,44 @@ class SettingsPage extends StatefulWidget {
 class _SettingsPageState extends State<SettingsPage> {
   bool _notificationsEnabled = true;
   String _appVersion = '';
+  static const String _notificationsKey = 'notifications_enabled';
 
   @override
   void initState() {
     super.initState();
     _loadAppVersion();
+    _loadNotificationPreference();
   }
 
   Future<void> _loadAppVersion() async {
     final packageInfo = await PackageInfo.fromPlatform();
     setState(() {
-      _appVersion = 'Version ${packageInfo.version}+${packageInfo.buildNumber}';
+      _appVersion = 'Version ${packageInfo.version}';
     });
+  }
+
+  Future<void> _loadNotificationPreference() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      setState(() {
+        _notificationsEnabled = prefs.getBool(_notificationsKey) ?? true;
+      });
+    } catch (e) {
+      debugPrint('Error loading notification preference: $e');
+    }
+  }
+
+  Future<void> _setNotificationPreference(bool value) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool(_notificationsKey, value);
+      setState(() {
+        _notificationsEnabled = value;
+      });
+      debugPrint('Notifications ${value ? 'enabled' : 'disabled'}');
+    } catch (e) {
+      debugPrint('Error saving notification preference: $e');
+    }
   }
 
   void _showLogoutDialog(BuildContext context) {
@@ -116,10 +143,7 @@ class _SettingsPageState extends State<SettingsPage> {
                   title: 'Notifications',
                   value: _notificationsEnabled,
                   onChanged: (value) {
-                    setState(() {
-                      _notificationsEnabled = value;
-                    });
-                    // TODO: Implement notifications toggle logic
+                    _setNotificationPreference(value);
                   },
                 ),
                 SettingsToggleTile(

@@ -1,5 +1,6 @@
 import 'package:ecu_scholar/views/grades_page.dart';
 import 'package:ecu_scholar/views/settings_page.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -8,9 +9,13 @@ import 'package:provider/provider.dart';
 import '../view_models/schedule_list_viewmodel.dart';
 import '../view_models/student_viewmodel.dart';
 import '../widgets/shimmer_loading.dart';
+import '../widgets/date_picker_dialog.dart' as custom_dialog;
 import '../utils/schedule_tile.dart';
 import '../constants/text_styles.dart';
 import '../widgets/empty_schedulelist_widget.dart';
+import '../widgets/shared_prefs_viewer.dart';
+import '../widgets/error_widget.dart' as error_widget;
+import '../services/exceptions/api_exception.dart';
 
 class SchedulePage extends StatefulWidget {
   const SchedulePage({super.key});
@@ -24,17 +29,20 @@ class _SchedulePageState extends State<SchedulePage> {
   late DateTime _baseDate;
   int _currentPageIndex = 0;
   
-  // Number of days to show (past and future)
-  static const int _daysToShow = 14; // 2 weeks
-  static const int _initialPage = 7; // Start at day 7 (today)
+  // Infinite swiping: ±6 months from today (365 days total)
+  // PageView lazily builds only visible pages (~3-5), so no performance impact
+  static const int _daysToShow = 365; // Full ±6 months range
+  static const int _initialPage = 182; // Start at day 182 (today in center)
 
   @override
   void initState() {
     super.initState();
-    _baseDate = DateTime.now();
+    // Normalize to midnight to avoid time-based offset errors
+    final now = DateTime.now();
+    _baseDate = DateTime(now.year, now.month, now.day);
     _currentPageIndex = _initialPage;
     _pageController = PageController(initialPage: _initialPage);
-    
+
     // Defer data loading to after first frame to ensure context is ready
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _loadData();
@@ -93,6 +101,39 @@ class _SchedulePageState extends State<SchedulePage> {
         date.day == now.day;
   }
 
+  /// Show date picker dialog and jump to selected date
+  Future<void> _openDatePicker() async {
+    final minDate = _baseDate.subtract(Duration(days: _initialPage));
+    final maxDate = _baseDate.add(Duration(days: _daysToShow - _initialPage - 1));
+
+    final selectedDate = await showDialog<DateTime>(
+      context: context,
+      builder: (context) => custom_dialog.DatePickerDialog(
+        initialDate: _currentDate,
+        minDate: minDate,
+        maxDate: maxDate,
+      ),
+    );
+
+    if (selectedDate != null) {
+      // Normalize selected date to midnight
+      final normalizedSelected = DateTime(selectedDate.year, selectedDate.month, selectedDate.day);
+      
+      // Calculate the page index - both dates are now at midnight so difference is exact
+      final offset = normalizedSelected.difference(_baseDate).inDays;
+      final pageIndex = _initialPage + offset + 1;
+
+      // Animate to the selected date's page
+      await _pageController.animateToPage(
+        pageIndex,
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeInOut,
+      );
+
+      debugPrint('Jumped to date: ${_getFormattedDate(normalizedSelected)} (page $pageIndex)');
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -134,27 +175,29 @@ class _SchedulePageState extends State<SchedulePage> {
           
           // Schedule content with PageView
           Expanded(
-            child: Consumer<ScheduleListViewModel>(
-              builder: (context, viewModel, child) {
-                if (viewModel.isLoading) {
-                  return const ScheduleShimmer();
-                }
+            child: PageView.builder(
+              controller: _pageController,
+              itemCount: _daysToShow,
+              onPageChanged: (index) {
+                // log page change event
+                setState(() {
+                  _currentPageIndex = index;
+                });
+              },
+              itemBuilder: (context, index) {
+                final date = _getDateForPage(index);
 
-                // Handle error state with retry option
-                if (viewModel.hasError) {
-                  return _buildErrorWidget(viewModel.errorMessage);
-                }
+                return Consumer<ScheduleListViewModel>(
+                  builder: (context, viewModel, child) {
+                    if (viewModel.isLoading) {
+                      return const ScheduleShimmer();
+                    }
 
-                return PageView.builder(
-                  controller: _pageController,
-                  itemCount: _daysToShow,
-                  onPageChanged: (index) {
-                    setState(() {
-                      _currentPageIndex = index;
-                    });
-                  },
-                  itemBuilder: (context, index) {
-                    final date = _getDateForPage(index);
+                    // Handle error state with retry option
+                    if (viewModel.hasError) {
+                      return _buildErrorWidget(viewModel.errorMessage);
+                    }
+
                     return _buildDaySchedule(viewModel, date);
                   },
                 );
@@ -163,6 +206,7 @@ class _SchedulePageState extends State<SchedulePage> {
           ),
         ],
       ),
+      floatingActionButton: kDebugMode ? const SharedPrefsViewerButton() : null,
     );
   }
 
@@ -170,44 +214,48 @@ class _SchedulePageState extends State<SchedulePage> {
     final date = _currentDate;
     final isToday = _isToday(date);
     
-    return Padding(
-      padding: const EdgeInsets.only(top: 14, bottom: 12, right: 12.0, left: 12.0),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Row(
-            children: [
-              Text(
-                _getDayName(date),
-                style: AppTextStyles.headline1,
-              ),
-              if (isToday) ...[
-                const SizedBox(width: 8),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                  decoration: BoxDecoration(
-                    color: Theme.of(context).colorScheme.error,
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Text(
-                    'Today',
-                    style: GoogleFonts.almarai(
-                      fontSize: 12,
-                      color: Colors.white,
-                      fontWeight: FontWeight.w500,
+    return InkWell(
+      onTap: _openDatePicker,
+      borderRadius: BorderRadius.circular(12),
+      child: Padding(
+        padding: const EdgeInsets.only(top: 14, bottom: 12, right: 12.0, left: 12.0),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Row(
+              children: [
+                Text(
+                  _getDayName(date),
+                  style: AppTextStyles.headline1,
+                ),
+                if (isToday) ...[
+                  const SizedBox(width: 8),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).colorScheme.error,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Text(
+                      'Today',
+                      style: GoogleFonts.almarai(
+                        fontSize: 12,
+                        color: Colors.white,
+                        fontWeight: FontWeight.w500,
+                      ),
                     ),
                   ),
-                ),
+                ],
               ],
-            ],
-          ),
-          Text(
-            _getFormattedDate(date),
-            style: AppTextStyles.bodyText1.copyWith(
-              color: Theme.of(context).colorScheme.error,
             ),
-          ),
-        ],
+            Text(
+              _getFormattedDate(date),
+              style: AppTextStyles.bodyText1.copyWith(
+                color: Theme.of(context).colorScheme.error,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -300,45 +348,17 @@ class _SchedulePageState extends State<SchedulePage> {
   }
 
   Widget _buildErrorWidget(String? errorMessage) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(24.0),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              Icons.error_outline,
-              size: 64,
-              color: Theme.of(context).colorScheme.error,
-            ),
-            const SizedBox(height: 16),
-            Text(
-              'Failed to load schedule',
-              style: GoogleFonts.almarai(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: Theme.of(context).colorScheme.onSurface,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              errorMessage ?? 'An unexpected error occurred',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                color: Colors.grey.shade600,
-                fontSize: 14,
-              ),
-            ),
-            const SizedBox(height: 24),
-            ElevatedButton.icon(
-              onPressed: () => fetchSchedules(),
-              icon: const Icon(Icons.refresh),
-              label: const Text('Retry'),
-              style: ElevatedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-              ),
-            ),
-          ],
+    final displayMessage = errorMessage ?? 'An unexpected error occurred.\nPull to refresh.';
+
+    return RefreshIndicator(
+      onRefresh: fetchSchedules,
+      child: SingleChildScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        child: SizedBox(
+          height: MediaQuery.of(context).size.height * 0.6,
+          child: error_widget.ErrorWidget(
+            message: displayMessage,
+          ),
         ),
       ),
     );

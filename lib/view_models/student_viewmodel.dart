@@ -1,4 +1,5 @@
 import 'package:ecu_scholar/models/student_model.dart';
+import 'package:ecu_scholar/services/auth_service/auth_service.dart';
 import 'package:flutter/material.dart';
 import '../services/remote_data_service/remote_data_service.dart';
 
@@ -16,6 +17,32 @@ class StudentViewModel extends ChangeNotifier {
     _errorMessage = null;
     notifyListeners();
     debugPrint('StudentViewModel: Student data set - ${student.name}');
+  }
+
+  /// Load cached student data from AuthService (called on app startup)
+  /// This restores student info from SharedPreferences on app restart
+  void loadCachedStudentData() {
+    final authService = AuthService.instance;
+    final studentId = authService.studentId;
+    final studentName = authService.studentName;
+    final studentFaculty = authService.studentFaculty;
+
+    // Only load if we have at least an ID and name
+    if (studentId != null && studentId.isNotEmpty && 
+        studentName != null && studentName.isNotEmpty) {
+      _studentData = Student(
+        id: studentId,
+        name: studentName,
+        faculty: studentFaculty ?? '',
+        major: '',
+        year: '',
+        totalPassedCH: 0,
+        courseRegStatus: '',
+      );
+      _loadingState = StudentLoadingState.loaded;
+      debugPrint('StudentViewModel: Cached student data loaded - $studentName');
+      notifyListeners();
+    }
   }
 
   StudentLoadingState get loadingState => _loadingState;

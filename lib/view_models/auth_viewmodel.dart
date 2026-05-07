@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import '../models/student_model.dart';
 import '../services/auth_service/auth_service.dart';
+import '../services/notification_service/remote_notification_service.dart';
 import '../services/remote_data_service/remote_data_service.dart';
 
 /// Enum representing the different states of authentication
@@ -84,6 +85,14 @@ class AuthViewModel extends ChangeNotifier {
     _setState(AuthState.loading);
     
     try {
+      // Call backend logout endpoint
+      final apiService = BackendApiService();
+      await apiService.authLogout();
+
+      // Delete FCM token
+      await RemoteNotificationService.instance.deleteToken();
+
+      // Clear local session token
       await _authService.clearSessionToken();
       _setState(AuthState.unauthenticated);
     } catch (e) {
@@ -95,6 +104,7 @@ class AuthViewModel extends ChangeNotifier {
 
   /// Initialize authentication with a session token from SIS cookie.
   /// Calls backend /auth/init to scrape and store student data.
+  /// Includes FCM token for push notification registration.
   /// Returns AuthInitResult with student data on success.
   Future<AuthInitResult> initializeWithToken(String sessionToken) async {
     _setState(AuthState.processing);
@@ -110,14 +120,25 @@ class AuthViewModel extends ChangeNotifier {
         return AuthInitResult(success: false, errorMessage: _errorMessage);
       }
 
+      // Get FCM token for notification registration
+      String? fcmToken;
+      try {
+        fcmToken = await RemoteNotificationService.instance.getFCMToken();
+      } catch (e) {
+        debugPrint('Warning: Failed to get FCM token: $e');
+        // Continue with auth even if FCM token fetch fails
+      }
+
       // Call backend to initialize auth and scrape data
       final apiService = BackendApiService();
-      final response = await apiService.authInit(sessionToken);
+      final response = await apiService.authInit(sessionToken, fcmToken: fcmToken);
 
-      // Save the student ID from the response
+      // Save the student ID, name, and faculty from the response
       final student = response.student;
       if (student.id.isNotEmpty) {
         await _authService.saveStudentId(student.id);
+        await _authService.saveStudentName(student.name);
+        await _authService.saveStudentFaculty(student.faculty);
         _cachedStudent = student;
         debugPrint('Auth init complete: Student ${student.name} (ID: ${student.id})');
       } else {
@@ -132,6 +153,51 @@ class AuthViewModel extends ChangeNotifier {
       _errorMessage = e.toString().replaceFirst('Exception: ', '');
       _setState(AuthState.error);
       debugPrint('Auth init error: $_errorMessage');
+      return AuthInitResult(success: false, errorMessage: _errorMessage);
+    }
+  }
+
+  /// Dev mode login with session token - uses /auth/login endpoint
+  /// Faster than authInit, doesn't trigger scraping
+  /// Returns AuthInitResult with student data on success.
+  Future<AuthInitResult> loginWithToken(String sessionToken) async {
+    _setState(AuthState.processing);
+    _errorMessage = null;
+    _cachedStudent = null;
+
+    try {
+      // First, save the session token locally
+      final tokenSaved = await _authService.saveSessionToken(sessionToken);
+      if (!tokenSaved) {
+        _errorMessage = 'Failed to save session token locally';
+        _setState(AuthState.error);
+        return AuthInitResult(success: false, errorMessage: _errorMessage);
+      }
+
+      // Call backend to login with session token
+      final apiService = BackendApiService();
+      final response = await apiService.authLogin(sessionToken);
+
+      // Save the student ID, name, and faculty from the response
+      final student = response.student;
+      if (student.id.isNotEmpty) {
+        await _authService.saveStudentId(student.id);
+        await _authService.saveStudentName(student.name);
+        await _authService.saveStudentFaculty(student.faculty);
+        _cachedStudent = student;
+        debugPrint('Dev login complete: Student ${student.name} (ID: ${student.id})');
+      } else {
+        _errorMessage = 'No student ID returned from server';
+        _setState(AuthState.error);
+        return AuthInitResult(success: false, errorMessage: _errorMessage);
+      }
+
+      _setState(AuthState.authenticated);
+      return AuthInitResult(success: true, student: student);
+    } catch (e) {
+      _errorMessage = e.toString().replaceFirst('Exception: ', '');
+      _setState(AuthState.error);
+      debugPrint('Dev login error: $_errorMessage');
       return AuthInitResult(success: false, errorMessage: _errorMessage);
     }
   }

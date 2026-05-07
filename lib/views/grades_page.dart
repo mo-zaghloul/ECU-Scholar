@@ -1,5 +1,4 @@
 import 'package:ecu_scholar/view_models/grades_viewmodel.dart';
-import 'package:ecu_scholar/view_models/student_viewmodel.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
