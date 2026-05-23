@@ -414,4 +414,49 @@ class BackendApiService {
       rethrow;
     }
   }
+
+  /// Fetch university academic phase (schedule or exam phase)
+  /// Returns whether current phase is exam phase and relevant metadata
+  Future<Map<String, dynamic>> getUniPhase() async {
+    try {
+      final ddio = Dio(
+        BaseOptions(
+          baseUrl:
+              'https://ecu-scholar-backend-git-feat-3f1ae9-zaghlouls-projects-892807ee.vercel.app',
+          headers: {
+            'accept': 'application/json',
+            'x-vercel-protection-bypass':
+                '7FPokghkTLqsgwtBMOBM8eS3GTE0XBYx',
+          },
+        ),
+      );
+
+      final response = await ddio.get('/phase');
+
+      final semester =
+          response.data['semester']?.toString() ?? '';
+
+      final academicYear =
+          response.data['academic_year']?.toString() ?? '';
+
+      final isExam =
+          response.data['exams'] ?? false;
+
+      debugPrint(
+        '✅ Semester data loaded - '
+        'Semester: $semester, '
+        'Academic Year: $academicYear, '
+        'Is Exam Phase: $isExam',
+      );
+
+      return {
+        'semester': semester,
+        'academic_year': academicYear,
+        'exams': isExam,
+      };
+    } catch (e) {
+      debugPrint('❌ Failed to fetch semester data: $e');
+      throw _handleDioError(e);
+    }
+  }
 }
