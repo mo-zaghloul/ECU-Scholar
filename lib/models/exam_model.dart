@@ -2,29 +2,34 @@ import 'package:flutter/material.dart';
 
 /// Represents a single exam during the exam phase
 class Exam {
+  final String examId;
   final String courseCode;
   final String courseName;
   final DateTime startDateTime;  // Combined date + time (24h format from API)
   final DateTime endDateTime;    // Combined date + time (24h format from API)
-  final String? location;
-  final String? seat;
-  final String examType; // 'Final', 'Midterm', 'Quiz'
+  final String? hall;
+  final String? seatNumber;
+  final bool seatingAvailable;
+  final String examType; // 'Final', 'Midterm', 'Quiz' (derived from context)
 
   Exam({
+    required this.examId,
     required this.courseCode,
     required this.courseName,
     required this.startDateTime,
     required this.endDateTime,
-    required this.examType,
-    this.seat,
-    this.location,
+    this.hall,
+    this.seatNumber,
+    required this.seatingAvailable,
+    this.examType = 'Final',
   });
 
   /// Factory constructor to create Exam from backend API JSON response
-  /// API provides: date (ISO), start_time (HH:MM 24h), end_time (HH:MM 24h)
+  /// API provides: exam_date (YYYY-MM-DD), start_time (HH:MM 24h), end_time (HH:MM 24h)
+  /// Handles "null" string values as actual null
   factory Exam.fromJson(Map<String, dynamic> json) {
     // Parse the date
-    final dateStr = json['date'];
+    final dateStr = json['exam_date'];
     final DateTime examDate = dateStr is String
         ? DateTime.parse(dateStr)
         : dateStr as DateTime;
@@ -57,28 +62,40 @@ class Exam {
       endMinute,
     );
     
+    // Helper to convert "null" string to actual null
+    String? parseNullString(dynamic value) {
+      if (value == null) return null;
+      final str = value.toString().trim();
+      if (str.isEmpty || str.toLowerCase() == 'null') return null;
+      return str;
+    }
+    
     return Exam(
+      examId: json['exam_id'] ?? '',
       courseCode: json['course_code'] ?? '',
       courseName: json['course_name'] ?? '',
       startDateTime: startDateTime,
       endDateTime: endDateTime,
-      // Normalize empty strings to null
-      location: (json['location'] as String?)?.isEmpty == true ? null : json['location'],
-      seat: (json['seat'] as String?)?.isEmpty == true ? null : json['seat'],
-      examType: json['exam_type'] ?? 'Final',
+      // Parse nullable fields, convert "null" string to actual null
+      hall: parseNullString(json['hall']),
+      seatNumber: parseNullString(json['seat_number']),
+      seatingAvailable: json['seating_available'] ?? false,
+      examType: 'Final', // Derived from context or exam_type field if provided
     );
   }
 
   /// Convert to JSON for API requests
   Map<String, dynamic> toJson() {
     return {
+      'exam_id': examId,
       'course_code': courseCode,
       'course_name': courseName,
       'start_time': '${startDateTime.hour.toString().padLeft(2, '0')}:${startDateTime.minute.toString().padLeft(2, '0')}',
       'end_time': '${endDateTime.hour.toString().padLeft(2, '0')}:${endDateTime.minute.toString().padLeft(2, '0')}',
-      'date': startDateTime.toIso8601String(),
-      'location': location,
-      'seat': seat,
+      'exam_date': startDateTime.toIso8601String().split('T')[0],
+      'hall': hall,
+      'seat_number': seatNumber,
+      'seating_available': seatingAvailable,
       'exam_type': examType,
     };
   }
@@ -104,27 +121,24 @@ class Exam {
     return difference.inDays;
   }
 
-  /// Get time range as string (e.g., "09:00 — 11:00")
-  String get timeRange {
-    final startStr = '${startDateTime.hour.toString().padLeft(2, '0')}:${startDateTime.minute.toString().padLeft(2, '0')}';
-    final endStr = '${endDateTime.hour.toString().padLeft(2, '0')}:${endDateTime.minute.toString().padLeft(2, '0')}';
-    return '$startStr — $endStr';
-  }
+String _formatTime(DateTime dt) =>
+    '${dt.hour.toString().padLeft(2, '0')}:'
+    '${dt.minute.toString().padLeft(2, '0')}';
 
   /// Get time range as string (e.g., "09:00 — 11:00")
-  String get startTimeRange {
-    final startStr = '${startDateTime.hour.toString().padLeft(2, '0')}:${startDateTime.minute.toString().padLeft(2, '0')}';
-    return '$startStr';
-  }
+  String get timeRange => '${_formatTime(startDateTime)} — ${_formatTime(endDateTime)}';
+
+  /// Get time range as string (e.g., "09:00 — 11:00")
+  String get startTimeRange => _formatTime(startDateTime);
 
   /// Get formatted location info
-  /// Both location and seat are null → "TBA"
-  /// Both location and seat are present → "location · Seat seat"
+  /// Both hall and seatNumber are null → "TBA"
+  /// Both hall and seatNumber are present → "hall · Seat seatNumber"
   String getLocationDisplay() {
-    if (location == null || seat == null) {
+    if (hall == null || seatNumber == null) {
       return 'TBA';
     }
-    return '$location · Seat $seat';
+    return '$hall · Seat $seatNumber';
   }
 
   /// Get exam badge color based on type
@@ -200,15 +214,6 @@ class ExamPhase {
       'academic_year': academicYear,
       'exams_list': exams.map((e) => e.toJson()).toList(),
     };
-  }
-
-  /// Get today's exam (if any)
-  Exam? get todayExam {
-    try {
-      return exams.firstWhere((e) => e.isToday);
-    } catch (e) {
-      return null;
-    }
   }
 
   /// Get upcoming exams (excluding today's exam)
