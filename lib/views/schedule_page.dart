@@ -1,21 +1,18 @@
 import 'package:ecu_scholar/views/grades_page.dart';
 import 'package:ecu_scholar/views/settings_page.dart';
+import 'package:ecu_scholar/widgets/error_widget.dart' as error_widget;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import '../view_models/schedule_list_viewmodel.dart';
 import '../view_models/student_viewmodel.dart';
-import '../widgets/shimmer_loading.dart';
-import '../widgets/date_picker_dialog.dart' as custom_dialog;
-import '../utils/schedule_tile.dart';
-import '../constants/text_styles.dart';
-import '../widgets/empty_schedulelist_widget.dart';
+import '../view_models/exam_phase_viewmodel.dart';
+import '../widgets/exam_phase_widget.dart';
+import '../widgets/day_schedule_widget.dart';
 import '../widgets/shared_prefs_viewer.dart';
-import '../widgets/error_widget.dart' as error_widget;
-import '../services/exceptions/api_exception.dart';
+import '../widgets/shimmer_loading.dart';
 
 class SchedulePage extends StatefulWidget {
   const SchedulePage({super.key});
@@ -25,34 +22,13 @@ class SchedulePage extends StatefulWidget {
 }
 
 class _SchedulePageState extends State<SchedulePage> {
-  late PageController _pageController;
-  late DateTime _baseDate;
-  int _currentPageIndex = 0;
-  
-  // Infinite swiping: ±6 months from today (365 days total)
-  // PageView lazily builds only visible pages (~3-5), so no performance impact
-  static const int _daysToShow = 365; // Full ±6 months range
-  static const int _initialPage = 182; // Start at day 182 (today in center)
-
   @override
   void initState() {
     super.initState();
-    // Normalize to midnight to avoid time-based offset errors
-    final now = DateTime.now();
-    _baseDate = DateTime(now.year, now.month, now.day);
-    _currentPageIndex = _initialPage;
-    _pageController = PageController(initialPage: _initialPage);
-
     // Defer data loading to after first frame to ensure context is ready
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _loadData();
     });
-  }
-
-  @override
-  void dispose() {
-    _pageController.dispose();
-    super.dispose();
   }
 
   Future<void> _loadData() async {
@@ -62,75 +38,16 @@ class _SchedulePageState extends State<SchedulePage> {
       if (studentViewModel.loadingState != StudentLoadingState.loaded) {
         await studentViewModel.fetchStudentData();
       }
+
+      // Fetch exam phase data
+      final examPhaseViewModel = Provider.of<ExamPhaseViewModel>(context, listen: false);
+      await examPhaseViewModel.fetchPhaseData();
+
       // Fetch schedules
-      await fetchSchedules();
+      await Provider.of<ScheduleListViewModel>(context, listen: false)
+          .fetchSchedules();
     } catch (e) {
       debugPrint('Error loading data: $e');
-    }
-  }
-
-  Future<void> fetchSchedules() async {
-    await Provider.of<ScheduleListViewModel>(context, listen: false)
-        .fetchSchedules();
-  }
-
-  /// Get date for a specific page index
-  DateTime _getDateForPage(int pageIndex) {
-    final offset = pageIndex - _initialPage;
-    return _baseDate.add(Duration(days: offset));
-  }
-
-  /// Get current displayed date
-  DateTime get _currentDate => _getDateForPage(_currentPageIndex);
-
-  /// Format day name (e.g., "Saturday")
-  String _getDayName(DateTime date) {
-    return DateFormat('EEEE').format(date);
-  }
-
-  /// Format date (e.g., "Feb 20")
-  String _getFormattedDate(DateTime date) {
-    return DateFormat('MMM d').format(date);
-  }
-
-  /// Check if date is today
-  bool _isToday(DateTime date) {
-    final now = DateTime.now();
-    return date.year == now.year &&
-        date.month == now.month &&
-        date.day == now.day;
-  }
-
-  /// Show date picker dialog and jump to selected date
-  Future<void> _openDatePicker() async {
-    final minDate = _baseDate.subtract(Duration(days: _initialPage));
-    final maxDate = _baseDate.add(Duration(days: _daysToShow - _initialPage - 1));
-
-    final selectedDate = await showDialog<DateTime>(
-      context: context,
-      builder: (context) => custom_dialog.DatePickerDialog(
-        initialDate: _currentDate,
-        minDate: minDate,
-        maxDate: maxDate,
-      ),
-    );
-
-    if (selectedDate != null) {
-      // Normalize selected date to midnight
-      final normalizedSelected = DateTime(selectedDate.year, selectedDate.month, selectedDate.day);
-      
-      // Calculate the page index - both dates are now at midnight so difference is exact
-      final offset = normalizedSelected.difference(_baseDate).inDays;
-      final pageIndex = _initialPage + offset + 1;
-
-      // Animate to the selected date's page
-      await _pageController.animateToPage(
-        pageIndex,
-        duration: const Duration(milliseconds: 300),
-        curve: Curves.easeInOut,
-      );
-
-      debugPrint('Jumped to date: ${_getFormattedDate(normalizedSelected)} (page $pageIndex)');
     }
   }
 
@@ -167,124 +84,36 @@ class _SchedulePageState extends State<SchedulePage> {
           ),
         ],
       ),
-      body: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Date header with swipe indicators
-          _buildDateHeader(),
-          
-          // Schedule content with PageView
-          Expanded(
-            child: PageView.builder(
-              controller: _pageController,
-              itemCount: _daysToShow,
-              onPageChanged: (index) {
-                // log page change event
-                setState(() {
-                  _currentPageIndex = index;
-                });
-              },
-              itemBuilder: (context, index) {
-                final date = _getDateForPage(index);
+      body: Consumer<ExamPhaseViewModel>(
+        builder: (context, examViewModel, _) {
+          // If loading or in exam phase, show exam UI (ExamPhaseWidget handles loading/error/content states)
+          if (examViewModel.loadingState == ExamPhaseLoadingState.loading || 
+              examViewModel.isExamPhase) {
+            return const ExamPhaseWidget();
+          }
 
-                return Consumer<ScheduleListViewModel>(
-                  builder: (context, viewModel, child) {
-                    if (viewModel.isLoading) {
-                      return const ScheduleShimmer();
-                    }
-
-                    // Handle error state with retry option
-                    if (viewModel.hasError) {
-                      return _buildErrorWidget(viewModel.errorMessage);
-                    }
-
-                    return _buildDaySchedule(viewModel, date);
-                  },
-                );
-              },
-            ),
-          ),
-        ],
-      ),
-      floatingActionButton: kDebugMode ? const SharedPrefsViewerButton() : null,
-    );
-  }
-
-  Widget _buildDateHeader() {
-    final date = _currentDate;
-    final isToday = _isToday(date);
-    
-    return InkWell(
-      onTap: _openDatePicker,
-      borderRadius: BorderRadius.circular(12),
-      child: Padding(
-        padding: const EdgeInsets.only(top: 14, bottom: 12, right: 12.0, left: 12.0),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Row(
-              children: [
-                Text(
-                  _getDayName(date),
-                  style: AppTextStyles.headline1,
-                ),
-                if (isToday) ...[
-                  const SizedBox(width: 8),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                    decoration: BoxDecoration(
-                      color: Theme.of(context).colorScheme.error,
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Text(
-                      'Today',
-                      style: GoogleFonts.almarai(
-                        fontSize: 12,
-                        color: Colors.white,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
+          // Phase fetch failed and not in exam phase → show error with RefreshIndicator
+          if (examViewModel.loadingState == ExamPhaseLoadingState.error) {
+            return RefreshIndicator(
+              onRefresh: () => examViewModel.fetchPhaseData(),
+              child: SingleChildScrollView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                child: SizedBox(
+                  height: MediaQuery.of(context).size.height * 0.8,
+                  child: error_widget.ErrorWidget(
+                    message: examViewModel.errorMessage ?? 
+                        'Failed to load exam phase.\nPull to refresh.',
                   ),
-                ],
-              ],
-            ),
-            Text(
-              _getFormattedDate(date),
-              style: AppTextStyles.bodyText1.copyWith(
-                color: Theme.of(context).colorScheme.error,
+                ),
               ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
+            );
+          }
 
-  Widget _buildDaySchedule(ScheduleListViewModel viewModel, DateTime date) {
-    final schedules = viewModel.getSchedulesForDate(date);
-    
-    if (schedules.isEmpty) {
-      return RefreshIndicator(
-        onRefresh: fetchSchedules,
-        child: SingleChildScrollView(
-          physics: const AlwaysScrollableScrollPhysics(),
-          child: SizedBox(
-            height: MediaQuery.of(context).size.height * 0.6,
-            child: EmptySchedulelistWidget(),
-          ),
-        ),
-      );
-    }
-
-    return RefreshIndicator(
-      onRefresh: fetchSchedules,
-      child: ListView.builder(
-        physics: const AlwaysScrollableScrollPhysics(),
-        itemCount: schedules.length,
-        itemBuilder: (context, index) {
-          return ScheduleTile(schedule: schedules[index]);
+          // Otherwise show normal schedule view
+          return const SchedulePageView();
         },
       ),
+      floatingActionButton: kDebugMode ? const SharedPrefsViewerButton() : null,
     );
   }
 
@@ -345,22 +174,5 @@ class _SchedulePageState extends State<SchedulePage> {
     } else {
       return '';
     }
-  }
-
-  Widget _buildErrorWidget(String? errorMessage) {
-    final displayMessage = errorMessage ?? 'An unexpected error occurred.\nPull to refresh.';
-
-    return RefreshIndicator(
-      onRefresh: fetchSchedules,
-      child: SingleChildScrollView(
-        physics: const AlwaysScrollableScrollPhysics(),
-        child: SizedBox(
-          height: MediaQuery.of(context).size.height * 0.6,
-          child: error_widget.ErrorWidget(
-            message: displayMessage,
-          ),
-        ),
-      ),
-    );
   }
 }

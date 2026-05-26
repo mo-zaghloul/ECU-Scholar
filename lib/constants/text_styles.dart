@@ -39,4 +39,18 @@ class AppTextStyles {
     fontSize: 14.0,
     fontWeight: FontWeight.w500,
   );
+
+  // Small text
+  static final TextStyle small13w500 = GoogleFonts.almarai(
+    fontSize: 13.0,
+    fontWeight: FontWeight.w500,
+  );
+  static final TextStyle small12 = GoogleFonts.almarai(
+    fontSize: 12.0,
+    fontWeight: FontWeight.normal,
+  );
+  static final TextStyle small11 = GoogleFonts.almarai(
+    fontSize: 11.0,
+    fontWeight: FontWeight.normal,
+  );
 }
