@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import 'exam_card.dart';
 import 'upcoming_exam_card.dart';
 import 'date_header.dart';
+import 'shimmer_loading.dart' show ScheduleShimmer;
 
 class ExamPhaseWidget extends StatelessWidget {
   const ExamPhaseWidget({super.key});
@@ -13,29 +14,83 @@ class ExamPhaseWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     
-    return SingleChildScrollView(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Date header: "Monday" + "Today" pill + date
-          DateHeaderWidget(
-            date: DateTime.now(),
-            showTodayPill: true,
+    return Consumer<ExamPhaseViewModel>(
+      builder: (context, examViewModel, child) {
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Date header: Always visible, OUTSIDE RefreshIndicator
+            DateHeaderWidget(
+              date: DateTime.now(),
+              showTodayPill: true,
+            ),
+
+            // Content area with RefreshIndicator
+            Expanded(
+              child: _buildContent(context, examViewModel, theme),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _buildContent(
+    BuildContext context,
+    ExamPhaseViewModel examViewModel,
+    ThemeData theme,
+  ) {
+    // When loading, show shimmer (ScheduleShimmer is a ListView, use it directly!)
+    if (examViewModel.loadingState == ExamPhaseLoadingState.loading) {
+      return RefreshIndicator(
+        onRefresh: () => examViewModel.fetchPhaseData(),
+        child: const ScheduleShimmer(),
+      );
+    }
+
+    // When error, show error message with fixed height
+    if (examViewModel.loadingState == ExamPhaseLoadingState.error) {
+      return RefreshIndicator(
+        onRefresh: () => examViewModel.fetchPhaseData(),
+        child: SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          child: SizedBox(
+            height: MediaQuery.of(context).size.height * 0.6,
+            child: Center(
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Text(
+                  'Failed to load exams.\nPull to refresh.',
+                  textAlign: TextAlign.center,
+                  style: GoogleFonts.almarai(
+                    fontSize: 14,
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
+                ),
+              ),
+            ),
           ),
+        ),
+      );
+    }
 
-          // Single Consumer for all exam phase data
-          Consumer<ExamPhaseViewModel>(
-            builder: (context, examViewModel, child) {
-              // Show featured exam (next upcoming) if exists
-              if (examViewModel.nextUpcomingExam != null) {
-                return ExamCardWidget(
-                  exam: examViewModel.nextUpcomingExam!,
-                  countdownText: examViewModel.countdownText,
-                );
-              }
-
+    // Loaded state: Show exam content (has scrollable content)
+    return RefreshIndicator(
+      onRefresh: () => examViewModel.fetchPhaseData(),
+      child: SingleChildScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Featured exam (next upcoming) if exists
+            if (examViewModel.nextUpcomingExam != null)
+              ExamCardWidget(
+                exam: examViewModel.nextUpcomingExam!,
+                countdownText: examViewModel.countdownText,
+              )
+            else
               // If no upcoming exams, show placeholder
-              return Container(
+              Container(
                 width: double.infinity,
                 margin:
                     const EdgeInsets.symmetric(horizontal: 16, vertical: 0),
@@ -57,29 +112,11 @@ class ExamPhaseWidget extends StatelessWidget {
                     color: theme.colorScheme.error,
                   ),
                 ),
-              );
-            },
-          ),
+              ),
 
-          // Upcoming exams section - included in same Consumer
-          Consumer<ExamPhaseViewModel>(
-            builder: (context, examViewModel, child) {
-              final upcomingExams = examViewModel.upcomingExams;
-
-              if (upcomingExams.isEmpty) {
-                return Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Text(
-                    'No upcoming exams',
-                    style: GoogleFonts.almarai(
-                      fontSize: 13,
-                      color: theme.colorScheme.onSurfaceVariant,
-                    ),
-                  ),
-                );
-              }
-
-              return Column(
+            // Upcoming exams section
+            if (examViewModel.upcomingExams.isNotEmpty)
+              Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Padding(
@@ -99,15 +136,25 @@ class ExamPhaseWidget extends StatelessWidget {
                       ),
                     ),
                   ),
-                  ...upcomingExams.map(
+                  ...examViewModel.upcomingExams.map(
                     (exam) => UpcomingExamCardWidget(exam: exam),
                   ),
                   const SizedBox(height: 16),
                 ],
-              );
-            },
-          ),
-        ],
+              )
+            else
+              Padding(
+                padding: const EdgeInsets.all(16),
+                child: Text(
+                  'No upcoming exams',
+                  style: GoogleFonts.almarai(
+                    fontSize: 13,
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
+                ),
+              ),
+          ],
+        ),
       ),
     );
   }

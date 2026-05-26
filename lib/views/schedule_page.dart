@@ -1,5 +1,6 @@
 import 'package:ecu_scholar/views/grades_page.dart';
 import 'package:ecu_scholar/views/settings_page.dart';
+import 'package:ecu_scholar/widgets/error_widget.dart' as error_widget;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -11,6 +12,7 @@ import '../view_models/exam_phase_viewmodel.dart';
 import '../widgets/exam_phase_widget.dart';
 import '../widgets/day_schedule_widget.dart';
 import '../widgets/shared_prefs_viewer.dart';
+import '../widgets/shimmer_loading.dart';
 
 class SchedulePage extends StatefulWidget {
   const SchedulePage({super.key});
@@ -84,9 +86,27 @@ class _SchedulePageState extends State<SchedulePage> {
       ),
       body: Consumer<ExamPhaseViewModel>(
         builder: (context, examViewModel, _) {
-          // If in exam phase, show exam UI instead of schedule
-          if (examViewModel.isExamPhase && examViewModel.loadingState == ExamPhaseLoadingState.loaded) {
+          // If loading or in exam phase, show exam UI (ExamPhaseWidget handles loading/error/content states)
+          if (examViewModel.loadingState == ExamPhaseLoadingState.loading || 
+              examViewModel.isExamPhase) {
             return const ExamPhaseWidget();
+          }
+
+          // Phase fetch failed and not in exam phase → show error with RefreshIndicator
+          if (examViewModel.loadingState == ExamPhaseLoadingState.error) {
+            return RefreshIndicator(
+              onRefresh: () => examViewModel.fetchPhaseData(),
+              child: SingleChildScrollView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                child: SizedBox(
+                  height: MediaQuery.of(context).size.height * 0.8,
+                  child: error_widget.ErrorWidget(
+                    message: examViewModel.errorMessage ?? 
+                        'Failed to load exam phase.\nPull to refresh.',
+                  ),
+                ),
+              ),
+            );
           }
 
           // Otherwise show normal schedule view
