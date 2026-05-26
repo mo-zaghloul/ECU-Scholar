@@ -2,6 +2,8 @@ import 'package:dio/dio.dart';
 import 'package:ecu_scholar/models/grade_model.dart';
 import 'package:ecu_scholar/models/schedule_model.dart';
 import 'package:ecu_scholar/models/student_model.dart';
+import 'package:ecu_scholar/models/exam_model.dart';
+import 'package:ecu_scholar/models/phase_model.dart';
 import 'package:flutter/material.dart';
 
 import '../../constants/secrets.dart';
@@ -415,48 +417,30 @@ class BackendApiService {
     }
   }
 
-  /// Fetch university academic phase (schedule or exam phase)
-  /// Returns whether current phase is exam phase and relevant metadata
-  Future<Map<String, dynamic>> getUniPhase() async {
+  /// Fetch phase information (semester, academic year, exam phase status)
+  Future<PhaseData> getPhase() async {
     try {
-      final ddio = Dio(
-        BaseOptions(
-          baseUrl:
-              'https://ecu-scholar-backend-git-feat-3f1ae9-zaghlouls-projects-892807ee.vercel.app',
-          headers: {
-            'accept': 'application/json',
-            'x-vercel-protection-bypass':
-                '7FPokghkTLqsgwtBMOBM8eS3GTE0XBYx',
-          },
-        ),
-      );
-
-      final response = await ddio.get('/phase');
-
-      final semester =
-          response.data['semester']?.toString() ?? '';
-
-      final academicYear =
-          response.data['academic_year']?.toString() ?? '';
-
-      final isExam =
-          response.data['exams'] ?? false;
-
-      debugPrint(
-        '✅ Semester data loaded - '
-        'Semester: $semester, '
-        'Academic Year: $academicYear, '
-        'Is Exam Phase: $isExam',
-      );
-
-      return {
-        'semester': semester,
-        'academic_year': academicYear,
-        'exams': isExam,
-      };
+      final response = await _dio.get('/phase');
+      return PhaseData.fromJson(response.data);
     } catch (e) {
-      debugPrint('❌ Failed to fetch semester data: $e');
+      debugPrint('❌ Failed to fetch phase data: $e');
       throw _handleDioError(e);
     }
   }
+
+  /// Fetch all exams for the current semester with seating information
+  Future<List<Exam>> getPhaseExams() async {
+    try {
+      final response = await _dio.get('/phase/exams');
+      final exams = response.data['exams'] as List<dynamic>? ?? [];
+      debugPrint('✅ Phase exams loaded — ${exams.length} exams');
+      return exams
+          .map((e) => Exam.fromJson(e as Map<String, dynamic>))
+          .toList();
+    } catch (e) {
+      debugPrint('❌ Failed to fetch phase exams: $e');
+      throw _handleDioError(e);
+    }
+  }
+
 }

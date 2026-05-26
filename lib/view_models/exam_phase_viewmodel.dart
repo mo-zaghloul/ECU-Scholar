@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:collection/collection.dart';
 import 'package:ecu_scholar/models/exam_model.dart';
 import 'package:flutter/material.dart';
 import '../services/remote_data_service/remote_data_service.dart';
@@ -19,60 +20,6 @@ class ExamPhaseViewModel extends ChangeNotifier {
   String _countdownText = '--:--:--';
   bool _timerRunning = false;
 
-  ExamPhaseViewModel() {
-    _initializeDummyExams();
-  }
-
-  /// Initialize dummy exam data for development
-  /// This will be replaced with real API data once backend is ready
-void _initializeDummyExams() {
-  _exams = [
-    // Today at 3:00 PM
-    // Exam(
-    //   courseCode: 'CS401',
-    //   courseName: 'Design & Analysis of Algorithms',
-    //   startDateTime: DateTime(2026, 5, 23, 15, 0),
-    //   endDateTime: DateTime(2026, 5, 23, 17, 0),
-    //   examType: 'Final',
-    //   location: null,
-    //   seat: null,
-    // ),
-
-    // May 26, 2026 at 9:00 AM
-    Exam(
-      courseCode: 'SE402',
-      courseName: 'Software Engineering (2)',
-      startDateTime: DateTime(2026, 5, 26, 9, 0),
-      endDateTime: DateTime(2026, 5, 26, 11, 0),
-      examType: 'Final',
-      location: null,
-      seat: null,
-    ),
-
-    // May 28, 2026 at 9:00 AM
-    Exam(
-      courseCode: 'EE405',
-      courseName: 'Electronic Design Automation',
-      startDateTime: DateTime(2026, 5, 28, 9, 0),
-      endDateTime: DateTime(2026, 5, 28, 11, 0),
-      examType: 'Final',
-      location: 'A 201',
-      seat: '12',
-    ),
-
-    // May 30, 2026 at 9:00 AM
-    Exam(
-      courseCode: 'CE403',
-      courseName: 'Control Engineering',
-      startDateTime: DateTime(2026, 5, 30, 9, 0),
-      endDateTime: DateTime(2026, 5, 30, 11, 0),
-      examType: 'Final',
-      location: 'C 305',
-      seat: '20',
-    ),
-  ];
-}
-
   // Getters
   ExamPhaseLoadingState get loadingState => _loadingState;
   String? get errorMessage => _errorMessage;
@@ -85,15 +32,10 @@ void _initializeDummyExams() {
 
   /// Get next nearest upcoming exam (today or future)
   Exam? get nextUpcomingExam {
-    try {
-      final now = DateTime.now();
-      // Find first exam that is today or in the future
-      return _exams.firstWhere(
-        (e) => e.startDateTime.isAfter(now) || _isSameDay(e.startDateTime, now),
-      );
-    } catch (e) {
-      return null;
-    }
+    final now = DateTime.now();
+    return _exams.firstWhereOrNull(
+      (e) => e.startDateTime.isAfter(now) || _isSameDay(e.startDateTime, now),
+    );
   }
 
   /// Check if date is today
@@ -127,32 +69,36 @@ void _initializeDummyExams() {
     _loadingState = ExamPhaseLoadingState.loading;
     _errorMessage = null;
     notifyListeners();
-    debugPrint('ExamPhaseViewModel: Fetching phase data...');
 
     try {
       final apiService = BackendApiService();
-      final phaseData = await apiService.getUniPhase();
 
-      _semester = phaseData['semester'] ?? '';
-      _academicYear = phaseData['academic_year'] ?? '';
-      _isExamPhase = phaseData['exams'] ?? false;
+      final phaseData = await apiService.getPhase();
+      _semester     = phaseData.semester;
+      _academicYear = phaseData.academicYear;
+      _isExamPhase  = phaseData.isExamPhase;
 
-      debugPrint(
-        '✅ ExamPhaseViewModel: Phase data loaded - '
-        'isExam=$_isExamPhase, semester=$_semester',
-      );
+      if (_isExamPhase) {
+        try {
+          _exams = await apiService.getPhaseExams();
+          debugPrint('✅ ${_exams.length} exams loaded');
+        } catch (e) {
+          debugPrint('⚠️ Failed to load exams: $e');
+          _exams = [];
+        }
+      } else {
+        _exams = [];
+      }
 
       _loadingState = ExamPhaseLoadingState.loaded;
 
-      // Start countdown timer if in exam phase
       if (_isExamPhase && nextUpcomingExam != null) {
-        debugPrint('ExamPhaseViewModel: Starting countdown timer for next exam');
         _startCountdownTimer();
       }
 
       notifyListeners();
     } catch (e) {
-      debugPrint('ExamPhaseViewModel: Error fetching phase data: $e');
+      debugPrint('❌ Error fetching phase data: $e');
       _errorMessage = e.toString();
       _loadingState = ExamPhaseLoadingState.error;
       notifyListeners();
