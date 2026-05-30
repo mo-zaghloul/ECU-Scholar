@@ -5,6 +5,7 @@ import 'package:ecu_scholar/view_models/auth_viewmodel.dart';
 import 'package:ecu_scholar/view_models/grades_viewmodel.dart';
 import 'package:ecu_scholar/view_models/onboarding_viewmodel.dart';
 import 'package:ecu_scholar/view_models/student_viewmodel.dart';
+import 'package:ecu_scholar/view_models/exam_phase_viewmodel.dart';
 import 'package:ecu_scholar/views/auth_page.dart';
 import 'package:ecu_scholar/views/onboarding_page.dart';
 import 'package:ecu_scholar/themes/theme_provider.dart';
@@ -65,6 +66,7 @@ Future<void> main() async {
             ChangeNotifierProvider<ScheduleListViewModel>(create: (context) => ScheduleListViewModel()),
             ChangeNotifierProvider<StudentViewModel>(create: (context) => StudentViewModel()),
             ChangeNotifierProvider<GradesViewModel>(create: (context) => GradesViewModel()),
+            ChangeNotifierProvider<ExamPhaseViewModel>(create: (context) => ExamPhaseViewModel()),
           ],
           child: const MyApp(),
         ),

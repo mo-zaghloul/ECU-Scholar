@@ -2,6 +2,8 @@ import 'package:dio/dio.dart';
 import 'package:ecu_scholar/models/grade_model.dart';
 import 'package:ecu_scholar/models/schedule_model.dart';
 import 'package:ecu_scholar/models/student_model.dart';
+import 'package:ecu_scholar/models/exam_model.dart';
+import 'package:ecu_scholar/models/phase_model.dart';
 import 'package:flutter/material.dart';
 
 import '../../constants/secrets.dart';
@@ -414,4 +416,31 @@ class BackendApiService {
       rethrow;
     }
   }
+
+  /// Fetch phase information (semester, academic year, exam phase status)
+  Future<PhaseData> getPhase() async {
+    try {
+      final response = await _dio.get('/phase');
+      return PhaseData.fromJson(response.data);
+    } catch (e) {
+      debugPrint('❌ Failed to fetch phase data: $e');
+      throw _handleDioError(e);
+    }
+  }
+
+  /// Fetch all exams for the current semester with seating information
+  Future<List<Exam>> getPhaseExams() async {
+    try {
+      final response = await _dio.get('/phase/exams');
+      final exams = response.data['exams'] as List<dynamic>? ?? [];
+      debugPrint('✅ Phase exams loaded — ${exams.length} exams');
+      return exams
+          .map((e) => Exam.fromJson(e as Map<String, dynamic>))
+          .toList();
+    } catch (e) {
+      debugPrint('❌ Failed to fetch phase exams: $e');
+      throw _handleDioError(e);
+    }
+  }
+
 }

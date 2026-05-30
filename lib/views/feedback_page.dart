@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:provider/provider.dart';
+import '../services/feedback_service/feedback_service.dart';
+import '../view_models/student_viewmodel.dart';
+import '../widgets/modern_snackbar.dart';
 
 enum FeedbackType { feedback, bug }
 
@@ -55,17 +59,56 @@ class _FeedbackPageState extends State<FeedbackPage> {
       _isSubmitting = true;
     });
 
-    // TODO: Implement actual feedback submission (email, API, etc.)
-    // For now, simulate a delay
-    await Future.delayed(const Duration(seconds: 1));
+    try {
+      // Get student data from StudentViewModel
+      final studentViewModel = context.read<StudentViewModel>();
+      final student = studentViewModel.studentData;
 
-    setState(() {
-      _isSubmitting = false;
-    });
+      // Validate student data is available
+      if (student.id.isEmpty || student.name.isEmpty) {
+        ModernSnackBar.showError(
+          context: context,
+          message: 'Student information not available. Please try again.',
+        );
+        setState(() {
+          _isSubmitting = false;
+        });
+        return;
+      }
 
-    if (mounted) {
-      _showSuccessDialog();
+      // Send feedback via EmailJS
+      await FeedbackService.instance.sendFeedback(
+        feedbackType: widget.feedbackType == FeedbackType.bug ? 'Bug' : 'Feedback',
+        subject: _subjectController.text.trim(),
+        message: _messageController.text.trim(),
+        student: student,
+      );
+
+      setState(() {
+        _isSubmitting = false;
+      });
+
+      if (mounted) {
+        _showSuccessDialog();
+        _clearForm();
+      }
+    } catch (e) {
+      setState(() {
+        _isSubmitting = false;
+      });
+
+      if (mounted) {
+        ModernSnackBar.showError(
+          context: context,
+          message: 'Failed to submit ${widget.feedbackType == FeedbackType.bug ? 'bug report' : 'feedback'}. Please try again.',
+        );
+      }
     }
+  }
+
+  void _clearForm() {
+    _subjectController.clear();
+    _messageController.clear();
   }
 
   void _showSuccessDialog() {
