@@ -94,22 +94,33 @@ class RemoteNotificationService {
     }
   }
 
-  /// Handle foreground messages - show as local notification/toast
+    /// Handle foreground messages - show as local notification/toast
   Future<void> _handleForegroundMessage(RemoteMessage message) async {
-    debugPrint('Foreground message received: ${message.notification?.title}');
-    debugPrint('Data: ${message.data}');
+    // 1. Log incoming payload variables for easier debugging
+    debugPrint('Foreground message received. Notification Obj: ${message.notification?.title}');
+    debugPrint('Data map payload: ${message.data}');
 
     // Check if user has enabled notifications before showing
     final isEnabled = await LocalNotificationService().areNotificationsEnabled();
     if (!isEnabled) {
-      debugPrint('Notifications disabled - received but not showing: ${message.notification?.title}');
+      debugPrint('Notifications disabled - received but not showing.');
+      return;
+    }
+
+    // 2. Safely extract strings from either 'data' (Backend) or 'notification' (Console)
+    final String title = message.data['title'] ?? message.notification?.title ?? 'Notification';
+    final String body = message.data['body'] ?? message.notification?.body ?? '';
+
+    // If both parameters evaluate completely empty, skip displaying an alert window
+    if (title == 'Notification' && body.isEmpty) {
+      debugPrint('Skipping empty message wrapper.');
       return;
     }
 
     // Display local notification even though app is in foreground
     await LocalNotificationService().showNotification(
-      title: message.notification?.title ?? 'Notification',
-      body: message.notification?.body ?? '',
+      title: title,
+      body: body,
       payload: _encodePayload(message.data),
     );
   }
@@ -155,16 +166,25 @@ class RemoteNotificationService {
 /// Must be a top-level function
 @pragma('vm:entry-point')
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
-  debugPrint('Background message received: ${message.notification?.title}');
-  debugPrint('Data: ${message.data}');
+  debugPrint('Background message received. Notification Obj: ${message.notification?.title}');
+  debugPrint('Data map payload: ${message.data}');
+
+  // Extract variables safely from either message delivery channel structure
+  final String title = message.data['title'] ?? message.notification?.title ?? 'Notification';
+  final String body = message.data['body'] ?? message.notification?.body ?? '';
+
+  if (title == 'Notification' && body.isEmpty) {
+    return; // Don't build empty notifications in system tray
+  }
 
   // Initialize local notifications in background
   await LocalNotificationService().initialize();
 
   // Show notification in drawer
   await LocalNotificationService().showNotification(
-    title: message.notification?.title ?? 'Notification',
-    body: message.notification?.body ?? '',
+    title: title,
+    body: body,
     payload: message.data.toString(),
   );
 }
+
