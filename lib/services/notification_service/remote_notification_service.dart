@@ -166,21 +166,29 @@ class RemoteNotificationService {
 /// Must be a top-level function
 @pragma('vm:entry-point')
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
-  debugPrint('Background message received. Notification Obj: ${message.notification?.title}');
+  debugPrint('Background message received.');
+  debugPrint('Notification Obj: ${message.notification?.title}');
   debugPrint('Data map payload: ${message.data}');
 
-  // Extract variables safely from either message delivery channel structure
-  final String title = message.data['title'] ?? message.notification?.title ?? 'Notification';
-  final String body = message.data['body'] ?? message.notification?.body ?? '';
-
-  if (title == 'Notification' && body.isEmpty) {
-    return; // Don't build empty notifications in system tray
+  // If message.notification is NOT null, the phone OS has already automatically
+  // displayed this notification in the system tray. We must exit early to prevent a double notification.
+  if (message.notification != null) {
+    debugPrint('OS already handled showing this background notification. Exiting handler.');
+    return;
   }
 
-  // Initialize local notifications in background
+  // 1. Extract variables safely from the data payload (e.g. your Python script)
+  final String title = message.data['title'] ?? 'Notification';
+  final String body = message.data['body'] ?? '';
+
+  if (body.isEmpty && title == 'Notification') {
+    return; // Don't show empty alerts
+  }
+
+  // 2. Initialize local notifications in the background isolated process
   await LocalNotificationService().initialize();
 
-  // Show notification in drawer
+  // 3. Show notification in tray (Only hits this line for data-only payloads like Python)
   await LocalNotificationService().showNotification(
     title: title,
     body: body,
