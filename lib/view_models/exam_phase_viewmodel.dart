@@ -34,9 +34,9 @@ class ExamPhaseViewModel extends ChangeNotifier {
   Exam? get nextUpcomingExam {
     final now = DateTime.now();
     return _exams.firstWhereOrNull(
-      (e) => e.startDateTime.isAfter(now) || _isSameDay(e.startDateTime, now),
+      (e) => e.endDateTime.isAfter(now),
     );
-  }
+}
 
   /// Check if date is today
   bool _isToday(DateTime dateTime) {
@@ -49,15 +49,11 @@ class ExamPhaseViewModel extends ChangeNotifier {
     final featured = nextUpcomingExam;
     if (featured == null) return [];
     
-    final now = DateTime.now();
     return _exams
-        .where((e) =>
-            (e.startDateTime.isAfter(DateTime(now.year, now.month, now.day)) ||
-                _isSameDay(e.startDateTime, now)) &&
-            e != featured)
-        .toList()
-      ..sort((a, b) => a.startDateTime.compareTo(b.startDateTime));
-  }
+        .where((e) => e.endDateTime.isAfter(DateTime.now()) 
+                  && e.examId != featured.examId)
+        .toList(); // already sorted from load
+}
 
   /// Check if two dates are the same day
   bool _isSameDay(DateTime a, DateTime b) {
